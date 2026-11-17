@@ -1,0 +1,58 @@
+
+[
+  {
+    "id": "001",
+    "lender": "State Bank of India",
+    "scheme": "Global Ed-Vantage",
+    "max_amount": 30000000,
+    "collateral_threshold": "Collateral-free up to INR 5000000 for select premier institutions; otherwise tangible collateral security is required",
+    "margin_pct": 10,
+    "moratorium": "Course period + 6 months",
+    "interest_rule": "Simple interest during course and moratorium; interest servicing is optional. Unpaid accrued interest is added to principal for EMI calculation. Floating rate.",
+    "subsidy_income_limit": null
+  },
+  {
+    "id": "002",
+    "lender": "Government of India",
+    "scheme": "PM-Vidyalaxmi",
+    "max_amount": null,
+    "collateral_threshold": "Collateral-free and guarantor-free loans for eligible merit-based admissions to designated QHEIs in India",
+    "margin_pct": null,
+    "moratorium": "Course period + 1 year",
+    "interest_rule": "3% interest subvention on eligible loans up to INR 1000000 for families with annual income up to INR 800000 during moratorium. Separate full interest subvention may apply to eligible families with income up to INR 450000 under applicable guidelines.",
+    "subsidy_income_limit": 800000
+  },
+  {
+    "id": "003",
+    "lender": "Indian Banks' Association",
+    "scheme": "Model Educational Loan Scheme 2022",
+    "max_amount": null,
+    "collateral_threshold": "Generally no collateral up to INR 750000 when eligible for applicable credit guarantee coverage; above INR 750000, tangible collateral security is generally required, subject to bank policy.",
+    "margin_pct": null,
+    "moratorium": "Course period + 1 year",
+    "interest_rule": "Simple interest during study and moratorium. Interest servicing is optional; unpaid accrued interest is added to principal when EMI is fixed. Margin varies by loan amount and study location.",
+    "subsidy_income_limit": null
+  },
+  {
+    "id": "004",
+    "lender": "Government of India",
+    "scheme": "PM-USP Central Sector Interest Subsidy Scheme (CSIS)",
+    "max_amount": null,
+    "collateral_threshold": null,
+    "margin_pct": null,
+    "moratorium": "Course period + 1 year",
+    "interest_rule": "100% interest subsidy during moratorium on eligible education loans up to INR 1000000 for students with annual family income up to INR 450000 pursuing eligible technical or professional courses in India.",
+    "subsidy_income_limit": 450000
+  },
+  {
+    "id": "005",
+    "lender": "Bank of Baroda",
+    "scheme": "Baroda Scholar",
+    "max_amount": null,
+    "collateral_threshold": null,
+    "margin_pct": null,
+    "moratorium": null,
+    "interest_rule": "Interest rate and treatment during moratorium must be verified against the latest official scheme terms. Floating rate may apply.",
+    "subsidy_income_limit": null
+  }
+]
