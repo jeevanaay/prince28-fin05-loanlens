@@ -1,0 +1,146 @@
+# LoanLens — Dataset Source Register
+
+## 1. Official Source Portals
+
+| Source | URL | Status |
+|---|---|---|
+| PM-Vidyalaxmi | https://www.pmvidyalaxmi.co.in/ | Reviewed |
+| Ministry of Education | https://www.education.gov.in/ | Reviewed |
+| State Bank of India | https://sbi.bank.in/ | Reviewed |
+| Indian Banks' Association | https://www.iba.org.in/ | Source identified |
+
+## 2. Documents Reviewed
+
+### 2.1 SBI — Global Ed-Vantage Scheme
+
+- **Source:** State Bank of India
+- **URL:** https://sbi.bank.in/web/personal-banking/loans/education-loans/global-ed-vantage-scheme
+- **Document:** Global Ed-Vantage scheme page and November 2024 MITC
+- **Reviewed:** 17 November 2026
+- **Applicability:** Eligible full-time overseas education programmes
+
+**Key findings:**
+- Maximum loan amount: ₹3 crore.
+- Collateral-free loan facility: Up to ₹50 lakh for select premier institutions, subject to scheme conditions.
+- Margin: 10% as stated in the November 2024 MITC; verify against the latest applicable terms.
+- Moratorium: Course period + 6 months.
+- Simple interest is charged during the course and moratorium period.
+- Unpaid accrued interest is added to the principal for EMI calculation.
+- Repayment tenure: Up to 15 years.
+
+### 2.2 PM-Vidyalaxmi Scheme Guidelines
+
+- **Source:** Ministry of Education, Government of India
+- **Document:** PM-Vidyalaxmi Scheme Guidelines
+- **URL:** https://static.investindia.gov.in/s3fs-public/2025-03/pm_vidyalaxmi_scheme_guidelines.pdf
+- **Reviewed:** 17 November 2026
+- **Applicability:** Eligible Quality Higher Educational Institutions (QHEIs) in India.
+
+**Key findings:**
+- Students admitted to eligible QHEIs in India may qualify, subject to scheme conditions.
+- Students with annual family income up to ₹8 lakh may qualify for 3% interest subvention.
+- Interest subvention is available on eligible education loans up to ₹10 lakh.
+- The benefit applies during the moratorium period.
+- Moratorium: Course period + 1 year.
+- The scheme is not applicable to overseas MS programmes.
+
+### 2.3 IBA — Model Educational Loan Scheme (MELS), 2022
+
+- **Source:** Indian Banks' Association
+- **Document:** IBA Model Educational Loan Scheme, 2022
+- **URL:** https://d2w7l1p59qkl0r.cloudfront.net/upload/iba-model-education-loan-scheme.pdf
+- **Version:** 2022; amendments approved in 2023
+- **Reviewed:** 17 November 2026
+- **Applicability:** Eligible higher education programmes in India and abroad.
+
+**Key findings:**
+- Finance is based on the student's need and the bank's assessment; there is no single universal maximum loan amount.
+- Margin under the model scheme:
+  - Up to ₹4 lakh: No margin.
+  - Above ₹4 lakh up to ₹7.5 lakh: 5% for studies in India and 15% for studies abroad.
+  - Above ₹7.5 lakh: Subject to the lending bank's policy.
+- Collateral requirements generally apply above ₹7.5 lakh, subject to applicable credit-guarantee coverage and bank policy.
+- Moratorium: Course period + 1 year.
+- Repayment: Up to 15 years, excluding the moratorium period.
+- Simple interest is charged during the study and moratorium period.
+- Unpaid accrued interest may be added to the principal when repayment begins.
+- Actual terms may differ between banks because individual lenders can apply their own approved policies.
+
+### 2.4 PM-USP — Central Sector Interest Subsidy Scheme (CSIS)
+
+- **Source:** Ministry of Education, Government of India
+- **Document:** PM-USP Central Sector Interest Subsidy Scheme Guidelines
+- **URL:** https://www.canarabank.bank.in/documents/d/guest/csis-guideline-01-04-2022
+- **Guideline date:** 1 April 2022
+- **Reviewed:** 17 November 2026
+- **Applicability:** Eligible professional and technical courses in India, subject to scheme conditions.
+
+**Key findings:**
+- Annual family income limit: ₹4.5 lakh.
+- Provides 100% interest subsidy during the course period + 1 year.
+- Subsidy applies to eligible education loans up to ₹10 lakh.
+- Not applicable to overseas MS programmes.
+- Collateral-free loans up to ₹7.5 lakh are subject to applicable CGFSEL coverage and eligibility conditions.
+- Margin requirements must be checked against the applicable IBA model scheme and bank policy.
+
+### 2.5 Bank of Baroda — Baroda Scholar
+
+- **Source:** Bank of Baroda
+- **URL:** https://bankofbaroda.bank.in/loans/education-loan/baroda-scholar
+- **Reviewed:** 17 November 2026
+- **Applicability:** Eligible higher education programmes abroad, subject to scheme conditions.
+
+**Key findings:**
+- Maximum loan amount: ₹150 lakh, as stated in the bank's scheme information.
+- Interest rate: Starting from BRLLR + 1.75; verify the current applicable rate separately.
+- Collateral requirements: Pending verification.
+- Margin requirements: Pending verification.
+- Moratorium: Pending verification.
+- Interest treatment during moratorium: Pending verification.
+- Subsidy income limit: Not specified as a benefit under this bank scheme; check separate government subsidy eligibility.
+
+## 3. Documents Pending Collection
+
+- [ ] Latest SBI Global Ed-Vantage MITC and interest-rate details.
+- [ ] Latest PM-Vidyalaxmi FAQs and scheme updates.
+- [ ] Latest IBA Model Educational Loan Scheme amendments, if any.
+- [ ] Latest PM-USP CSIS guidelines and updates.
+- [ ] Latest Bank of Baroda Baroda Scholar detailed terms.
+- [ ] Education-loan scheme documents from seven additional banks.
+- [ ] Verify collateral, margin, moratorium and interest rules for every bank.
+
+## 4. Data Integrity Rules
+
+1. Use official government documents, bank publications and official scheme guidelines.
+2. Record the source document, publication/version date and review date for every scheme.
+3. Do not invent missing values or assume that one bank follows another bank's terms.
+4. Use `null` when a value is unavailable or cannot be verified.
+5. Distinguish between the document's effective date and the date it was reviewed.
+6. Verify collateral, margin, moratorium, interest and subsidy conditions before adding records.
+7. Record bank-specific variations separately from IBA model guidelines.
+8. Recheck floating interest rates before using them in calculations.
+9. Do not treat PM-Vidyalaxmi or CSIS benefits as applicable to overseas education unless the relevant official guidelines explicitly permit it.
+10. Keep source references traceable so every dataset value can be checked against its original document.
+
+## 5. Dataset Schema
+
+Every LoanLens record must contain the following fields:
+
+| Field | Description |
+|---|---|
+| `id` | Unique record identifier |
+| `lender` | Bank or scheme provider |
+| `scheme` | Education-loan scheme name |
+| `max_amount` | Maximum loan amount, in INR |
+| `collateral_threshold` | Loan amount or conditions at which collateral is required |
+| `margin_pct` | Margin percentage required |
+| `moratorium` | Repayment holiday period |
+| `interest_rule` | Interest calculation and repayment treatment |
+| `subsidy_income_limit` | Annual family-income eligibility limit for subsidy |
+
+**Dataset rules:**
+- Use unique IDs starting from `001`.
+- Store numeric values as numbers, not quoted strings.
+- Store descriptive rules as strings.
+- Use `null` for unavailable values.
+- Do not add unsupported values merely to complete a record.
