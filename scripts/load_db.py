@@ -1,13 +1,17 @@
 """Load data/sample_records.json into Postgres.
 
 New records are inserted, changed records updated, and unchanged
-records skipped using SHA-256 fingerprints.
+records skipped using versioned SHA-256 fingerprints.
+
+Use --test-db to explicitly target TEST_DATABASE_URL.
 """
 
+import argparse
 import asyncio
 import hashlib
 import json
 from datetime import date
+from typing import Any
 
 from sqlalchemy import select, update
 
@@ -15,12 +19,13 @@ from loanlens.config import get_settings
 from loanlens.db.models import Document
 from loanlens.db.session import make_engine, make_sessionmaker
 
-# LoanLens uses lender as the document title.
 TITLE_FIELD = "lender"
+FINGERPRINT_VERSION = 3
 
 KNOWN = {
     "id",
     "title",
+    "lender",
     "source_url",
     "licence",
     "doc_type",
@@ -28,35 +33,59 @@ KNOWN = {
 }
 
 
-def fingerprint(record: dict) -> str:
-    """Generate a stable SHA-256 fingerprint for a record."""
+def fingerprint(record: dict[str, Any]) -> str:
+    """Generate a stable, versioned SHA-256 fingerprint."""
     canonical = json.dumps(
-        record,
+        {
+            "loader_version": FINGERPRINT_VERSION,
+            "record": record,
+        },
         sort_keys=True,
         ensure_ascii=False,
         separators=(",", ":"),
     )
+
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def to_row(record: dict) -> dict:
-    """Convert a JSON record into a database row."""
+def to_row(record: dict[str, Any]) -> dict[str, Any]:
+    """Convert a JSON record into a database row with pruned metadata."""
     published = record.get("published_on")
+
+    metadata = {
+        key: value for key, value in record.items() if key not in KNOWN and value is not None
+    }
+
+    lender = record.get("lender")
 
     return {
         "external_id": str(record["id"]),
-        "title": str(record.get("title") or record.get(TITLE_FIELD) or record["id"]),
+        "title": str(record.get("title") or lender or record["id"]),
+        "lender": str(lender) if lender is not None else None,
         "source_url": record.get("source_url"),
         "licence": record.get("licence"),
         "doc_type": record.get("doc_type") or "record",
         "published_on": date.fromisoformat(published) if published else None,
         "sha256": fingerprint(record),
-        "metadata_": {key: value for key, value in record.items() if key not in KNOWN},
+        "metadata_": metadata,
     }
 
 
-async def main() -> None:
+async def main(use_test_db: bool = False) -> None:
     settings = get_settings()
+
+    if use_test_db:
+        if not settings.test_database_url:
+            raise RuntimeError(
+                "TEST_DATABASE_URL is not configured. Refusing to use the production database."
+            )
+
+        settings = settings.model_copy(update={"database_url": settings.test_database_url})
+
+        print("Database target: TEST DATABASE")
+
+    else:
+        print("Database target: DATABASE_URL")
 
     records = json.loads(settings.data_file.read_text(encoding="utf-8"))
 
@@ -96,4 +125,12 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description="Load LoanLens records.")
+    parser.add_argument(
+        "--test-db",
+        action="store_true",
+        help="Use TEST_DATABASE_URL instead of DATABASE_URL.",
+    )
+    args = parser.parse_args()
+
+    asyncio.run(main(use_test_db=args.test_db))

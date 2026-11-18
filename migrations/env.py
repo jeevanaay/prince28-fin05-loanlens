@@ -1,6 +1,7 @@
 """Alembic migration environment for LoanLens."""
 
 import asyncio
+import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -15,9 +16,21 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+settings = get_settings()
+
+# Use TEST_DATABASE_URL only when explicitly requested.
+use_test_db = os.getenv("LOANLENS_ALEMBIC_USE_TEST_DB") == "1"
+
+if use_test_db:
+    if not settings.test_database_url:
+        raise RuntimeError("TEST_DATABASE_URL is not configured. Refusing to run migrations.")
+    database_url = settings.test_database_url
+else:
+    database_url = settings.database_url
+
 config.set_main_option(
     "sqlalchemy.url",
-    get_settings().database_url.replace("%", "%%"),
+    database_url.replace("%", "%%"),
 )
 
 target_metadata = Base.metadata

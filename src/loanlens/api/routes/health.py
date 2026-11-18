@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Request, Response
 from sqlalchemy import text
 
 from loanlens.api.deps import SessionDep, SettingsDep
+from loanlens.db.session import get_pool_status
 
 router = APIRouter(tags=["health"])
 
@@ -36,4 +37,15 @@ async def ready(
     return {
         "status": "ready" if ok else "not_ready",
         "checks": checks,
+    }
+
+
+@router.get("/pool")
+def pool_status(request: Request) -> dict:
+    """Return current database connection pool statistics."""
+    engine = request.app.state.engine
+
+    return {
+        "status": "ok",
+        "pool": get_pool_status(engine),
     }
