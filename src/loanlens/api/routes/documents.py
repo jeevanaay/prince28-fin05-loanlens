@@ -3,11 +3,12 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Query
 
 from loanlens.api.deps import RepositoryDep
+from loanlens.api.schemas import DocumentListResponse, Record
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
 
-@router.get("")
+@router.get("", response_model=DocumentListResponse)
 async def list_documents(
     repository: RepositoryDep,
     q: Annotated[str | None, Query(max_length=200)] = None,
@@ -24,7 +25,7 @@ async def list_documents(
     }
 
 
-@router.get("/{doc_id}")
+@router.get("/{doc_id}", response_model=Record)
 async def get_document(
     doc_id: str,
     repository: RepositoryDep,
