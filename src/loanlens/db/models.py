@@ -38,6 +38,10 @@ class Document(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     external_id: Mapped[str] = mapped_column(String(64), unique=True)
     title: Mapped[str] = mapped_column(Text)
+
+    # Dedicated column for efficient lender filtering.
+    lender: Mapped[str | None] = mapped_column(String(200))
+
     source_url: Mapped[str | None] = mapped_column(Text)
     licence: Mapped[str | None] = mapped_column(String(200))
     doc_type: Mapped[str] = mapped_column(String(50), server_default="record")
@@ -48,17 +52,24 @@ class Document(Base):
         "metadata", JSONB, server_default=text("'{}'::jsonb")
     )
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
     )
 
     pages: Mapped[list["Page"]] = relationship(
-        back_populates="document", cascade="all, delete-orphan"
+        back_populates="document",
+        cascade="all, delete-orphan",
     )
 
     __table_args__ = (
         Index("ix_documents_doc_type", "doc_type"),
+        Index("ix_documents_lender", "lender"),
         Index(
             "ix_documents_metadata_gin",
             "metadata",
@@ -73,7 +84,8 @@ class Page(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     document_id: Mapped[int] = mapped_column(
-        ForeignKey("documents.id", ondelete="CASCADE"), index=True
+        ForeignKey("documents.id", ondelete="CASCADE"),
+        index=True,
     )
     page_no: Mapped[int]
     text: Mapped[str] = mapped_column(Text)
