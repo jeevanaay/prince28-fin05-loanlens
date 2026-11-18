@@ -1,21 +1,39 @@
 from fastapi import APIRouter, Response
+from sqlalchemy import text
 
-from loanlens.api.deps import SettingsDep, StoreDep
+from loanlens.api.deps import SessionDep, SettingsDep
 
 router = APIRouter(tags=["health"])
 
 
 @router.get("/health")
 def health(settings: SettingsDep) -> dict[str, str]:
-    """Liveness: is the process alive? Instant. Never touches the DB or the LLM."""
-    return {"status": "ok", "app": settings.app_name, "env": settings.app_env}
+    """Liveness: is the process alive?"""
+    return {
+        "status": "ok",
+        "app": settings.app_name,
+        "env": settings.app_env,
+    }
 
 
 @router.get("/ready")
-def ready(store: StoreDep, response: Response) -> dict:
-    """Readiness: can this instance serve traffic right now?"""
-    checks = {"records_loaded": store.ready}
+async def ready(
+    session: SessionDep,
+    response: Response,
+) -> dict:
+    """Readiness: can this instance connect to the database?"""
+    try:
+        await session.execute(text("SELECT 1"))
+        checks = {"database": True}
+    except Exception:
+        checks = {"database": False}
+
     ok = all(checks.values())
+
     if not ok:
         response.status_code = 503
-    return {"status": "ready" if ok else "not_ready", "checks": checks}
+
+    return {
+        "status": "ready" if ok else "not_ready",
+        "checks": checks,
+    }
