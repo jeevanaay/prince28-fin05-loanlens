@@ -1,8 +1,6 @@
 import pytest
-from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from loanlens.api.main import create_app
 from loanlens.config import Settings
 
 
@@ -12,17 +10,28 @@ def test_health_is_ok(client):
     assert r.json()["status"] == "ok"
 
 
-def test_ready_when_records_loaded(client):
+def test_ready_when_database_available(client):
     r = client.get("/ready")
     assert r.status_code == 200
-    assert r.json()["checks"]["records_loaded"] is True
+    assert r.json()["checks"]["database"] is True
 
 
-def test_ready_is_503_when_data_file_missing(tmp_path):
-    settings = Settings(app_env="ci", data_file=tmp_path / "missing.json")
-    with TestClient(create_app(settings)) as c:
-        assert c.get("/health").status_code == 200
-        assert c.get("/ready").status_code == 503
+def test_ready_is_503_when_database_unavailable(client):
+    from loanlens.api.deps import get_db_session
+
+    class UnavailableSession:
+        async def execute(self, statement):
+            raise RuntimeError("Database unavailable")
+
+    async def unavailable_session():
+        yield UnavailableSession()
+
+    client.app.dependency_overrides[get_db_session] = unavailable_session
+
+    r = client.get("/ready")
+
+    assert r.status_code == 503
+    assert r.json()["checks"]["database"] is False
 
 
 def test_list_documents_paginates(client):
