@@ -244,6 +244,67 @@ GET /v1/documents/001
 - PostgreSQL database
 - Git
 
+
+### Docker Compose Setup (Recommended)
+
+#### Prerequisites
+
+- Docker Desktop
+- Docker Compose
+
+#### 1. Build and start the application
+
+From the project root:
+
+```bash
+docker compose up --build -d
+```
+
+This starts PostgreSQL, Redis, database migrations, and the FastAPI application.
+
+#### 2. Verify running services
+
+```bash
+docker compose ps
+```
+
+#### 3. Access the application
+
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+- Health check: http://localhost:8000/health
+- Readiness check: http://localhost:8000/ready
+
+#### 4. View application logs
+
+```bash
+docker compose logs -f api
+```
+
+View migration logs:
+
+```bash
+docker compose logs migrate
+```
+
+#### 5. Stop the application
+
+```bash
+docker compose down
+```
+
+This stops and removes containers while preserving named database volumes.
+
+To reset the database completely, use:
+
+```bash
+docker compose down -v
+```
+
+**Warning:** This removes Compose-managed named volumes and permanently deletes the database data stored in them.
+
+---
+
 ### 1. Clone the repository
 
 ```bash
@@ -356,13 +417,30 @@ Compile the Python source files:
 python -m compileall -q src scripts tests migrations
 ```
 
+
 ### Current Test Status
 
-- 47 tests passing.
-- API and filtering tests.
-- Sorting and pagination tests.
-- Database integration tests.
-- Data-loader tests.
+| Test Category | Result |
+|---|---:|
+| Unit tests | 31 passed |
+| Integration tests | 9 passed |
+| Total | 40 passed |
+
+Coverage report:
+
+- Statement coverage: 72%
+- Total statements: 338
+- Missing statements: 84
+
+Integration tests create a uniquely named temporary PostgreSQL database, apply Alembic migrations and remove the database after execution.
+
+Commands:
+
+```bash
+uv run poe test
+uv run poe test-integration
+uv run poe cov
+```
 
 Integration tests use the dedicated test database configuration.
 
@@ -433,7 +511,7 @@ These are project targets, not yet claimed production results.
 - [x] Enhancement 6: Typed lender column and B-tree index.
 - [x] Enhancement 7: API sorting.
 - [x] Enhancement 8: Connection-pool monitoring.
-- [ ] Day 4: Docker, Docker Compose, coverage and one-command setup.
+- [x] Day 4: Docker, Docker Compose, automated migrations, unit and integration testing, coverage and one-command setup.
 - [ ] Day 5: Deployment and live API.
 - [ ] Future: Loan eligibility engine, EMI calculator and loan comparison interface.
 
@@ -443,7 +521,9 @@ These are project targets, not yet claimed production results.
 
 LoanLens currently has a working FastAPI backend, PostgreSQL integration, database migrations, document search and filtering, sorting, statistics and monitoring endpoints.
 
-The next development phase focuses on containerization, deployment readiness and expanding the loan eligibility and repayment calculation capabilities.
+Day 4 containerization is implemented and verified using Docker Compose, PostgreSQL 17, Redis 7, automated migrations, health checks and integration testing.
+
+The next development phase focuses on deployment, a live API and expanding the loan eligibility and repayment calculation capabilities.
 
 ---
 

@@ -1,0 +1,41 @@
+
+# Git
+.git
+.gitignore
+
+# Python environments
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.pyd
+
+# Test and lint caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# IDE and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Build artefacts
+build/
+dist/
+*.egg-info/
+
+# Docker
+Dockerfile
+docker-compose.override.yml
