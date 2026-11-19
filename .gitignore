@@ -18,3 +18,13 @@ data/raw/
 .vscode/
 .idea/
 .DS_Store
+
+# Test coverage
+.coverage
+.coverage.*
+htmlcov/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
