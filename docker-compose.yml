@@ -1,8 +1,7 @@
-
+﻿
 services:
   db:
     image: pgvector/pgvector:pg17
-    container_name: loanlens-db
     environment:
       POSTGRES_DB: app
       POSTGRES_USER: app
@@ -22,7 +21,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: loanlens-redis
     ports:
       - "6379:6379"
     healthcheck:
@@ -36,7 +34,6 @@ services:
     build:
       context: .
       target: runtime
-    container_name: loanlens-migrate
     command:
       - sh
       - -c
@@ -57,7 +54,6 @@ services:
     build:
       context: .
       target: runtime
-    container_name: loanlens-api
     ports:
       - "8000:8000"
     environment:
