@@ -17,6 +17,11 @@ def test_health_is_ok(client):
     assert r.json()["status"] == "ok"
 
 
+def test_health_supports_head(client):
+    r = client.head("/health")
+    assert r.status_code == 200
+
+
 def test_ready_when_database_available(client):
     r = client.get("/ready")
     assert r.status_code == 200

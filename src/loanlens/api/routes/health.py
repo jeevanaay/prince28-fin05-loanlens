@@ -7,7 +7,7 @@ from loanlens.db.session import get_pool_status
 router = APIRouter(tags=["health"])
 
 
-@router.get("/health")
+@router.api_route("/health", methods=["GET", "HEAD"])
 def health(settings: SettingsDep) -> dict[str, str]:
     """Liveness: is the process alive?"""
     return {
