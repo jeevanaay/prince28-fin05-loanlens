@@ -27,7 +27,7 @@ jobs:
 
           for attempt in $(seq 1 48); do
             if curl -fsS https://prince28-fin05-loanlens.onrender.com/health -o /tmp/health.json; then
-              DEPLOYED_COMMIT=$(python -c "import json; print(json.load(open('/tmp/health.json'))['commit'])")
+              DEPLOYED_COMMIT=$(python -c "import json; print(json.load(open('/tmp/health.json')).get('commit', ''))")
 
               echo "Currently deployed: $DEPLOYED_COMMIT"
 
