@@ -17,6 +17,15 @@ def test_health_is_ok(client):
     assert r.json()["status"] == "ok"
 
 
+def test_health_includes_render_commit(client, monkeypatch):
+    monkeypatch.setenv("RENDER_GIT_COMMIT", "test-commit-placeholder")
+
+    r = client.get("/health")
+
+    assert r.status_code == 200
+    assert r.json()["commit"] == "test-commit-placeholder"
+
+
 def test_health_supports_head(client):
     r = client.head("/health")
     assert r.status_code == 200

@@ -1,3 +1,5 @@
+import os
+
 from fastapi import APIRouter, Request, Response
 from sqlalchemy import text
 
@@ -14,6 +16,7 @@ def health(settings: SettingsDep) -> dict[str, str]:
         "status": "ok",
         "app": settings.app_name,
         "env": settings.app_env,
+        "commit": os.getenv("RENDER_GIT_COMMIT", "unknown"),
     }
 
 
