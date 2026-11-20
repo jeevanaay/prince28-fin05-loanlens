@@ -4,7 +4,19 @@
 
 LoanLens aims to simplify education financing for students planning higher studies in India and abroad by bringing scattered loan information into one structured platform.
 
-**Project Status:** Core API and database foundation completed. Eight backend enhancements implemented and merged into `main`. Docker deployment and documentation improvements are in progress.
+[![LoanLens CI](https://github.com/jeevanaay/prince28-fin05-loanlens/actions/workflows/ci.yml/badge.svg)](https://github.com/jeevanaay/prince28-fin05-loanlens/actions/workflows/ci.yml)
+
+[![LoanLens Status](https://badge.uptimerobot.com/psp/5b7ab50cea158c5884c059a998db9fa4.svg?style=logo&theme=light)](https://stats.uptimerobot.com/0ObUsW7ASp?utm_source=status_badge&utm_medium=referral)
+
+**System Status:** [LoanLens Status](https://stats.uptimerobot.com/0obUsW7Asp)
+
+**Live API:** https://prince28-fin05-loanlens.onrender.com
+
+**API Documentation:** https://prince28-fin05-loanlens.onrender.com/docs
+
+**Production Health:** [Health Check](https://prince28-fin05-loanlens.onrender.com/health) · [Database Readiness](https://prince28-fin05-loanlens.onrender.com/ready)
+
+**Project Status:** Backend API deployed successfully. PostgreSQL production database connected through Neon. Docker-based deployment configured on Render. CI pipeline and uptime monitoring operational.
 
 ---
 
