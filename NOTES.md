@@ -508,3 +508,25 @@ https://github.com/jeevanaay/prince28-fin05-loanlens
 | Week 1 Git tag | Pushed |
 | Rollback readiness | Inspected |
 | Actual rollback execution | Not performed |
+
+
+## Rollback Drill — November 21, 2026
+
+### Objective
+Verify that the production service can be rolled back to a previous successful deployment and restored to the latest version.
+
+### Execution
+
+| Operation | Commit | Duration | Result |
+|---|---|---:|---|
+| Rollback | 9323df8 | 25.8 seconds | Successful |
+| Restore latest deployment | 6cbf87c | 20.2 seconds | Successful |
+
+### Verification
+- Render reported both deployments as successful and live.
+- Production `/health` endpoint returned HTTP 200.
+- Previous deployment was restored successfully.
+- Latest deployment was subsequently restored successfully.
+
+### Outcome
+Rollback and recovery drill completed successfully.
