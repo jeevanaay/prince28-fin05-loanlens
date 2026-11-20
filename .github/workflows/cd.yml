@@ -1,0 +1,63 @@
+﻿
+name: LoanLens CD
+
+on:
+  workflow_run:
+    workflows: ["LoanLens CI"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test:
+    name: Production smoke test
+    if: ${{ github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Wait for production deployment and verify commit
+        env:
+          EXPECTED_COMMIT: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          echo "Expected production commit: $EXPECTED_COMMIT"
+          DEPLOYED_COMMIT=""
+
+          for attempt in $(seq 1 48); do
+            if curl -fsS https://prince28-fin05-loanlens.onrender.com/health -o /tmp/health.json; then
+              DEPLOYED_COMMIT=$(python -c "import json; print(json.load(open('/tmp/health.json'))['commit'])")
+
+              echo "Currently deployed: $DEPLOYED_COMMIT"
+
+              if [ "$DEPLOYED_COMMIT" = "$EXPECTED_COMMIT" ]; then
+                break
+              fi
+            fi
+
+            echo "Attempt $attempt/48: Waiting for expected deployment..."
+            sleep 10
+          done
+
+          if [ "$DEPLOYED_COMMIT" != "$EXPECTED_COMMIT" ]; then
+            echo "Smoke test failed: deployed commit does not match."
+            exit 1
+          fi
+
+          echo "Checking database readiness..."
+
+          for attempt in $(seq 1 12); do
+            if curl -fsS https://prince28-fin05-loanlens.onrender.com/ready -o /tmp/ready.json; then
+              if python -c "import json,sys; d=json.load(open('/tmp/ready.json')); sys.exit(0 if d.get('status') == 'ready' and d.get('checks', {}).get('database') is True else 1)"; then
+                echo "Smoke test passed"
+                exit 0
+              fi
+            fi
+
+            echo "Readiness attempt $attempt/12 failed. Retrying..."
+            sleep 10
+          done
+
+          echo "Smoke test failed: database did not become ready."
+          exit 1
