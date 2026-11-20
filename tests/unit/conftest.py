@@ -173,6 +173,7 @@ def data_file(tmp_path):
 def client(data_file):
     settings = Settings(
         app_env="ci",
+        database_url="postgresql://app:app@localhost:5433/app_test",  # pragma: allowlist secret,
         data_file=data_file,
     )
 
