@@ -333,3 +333,12 @@ Modules with the largest coverage gaps:
 | Integration tests | 9 passed |
 | Temporary database cleanup | Verified |
 | Coverage report | 72% |
+### Stretch Task: Docker Layer Analysis
+
+The largest application layer is the copied Python virtual environment (`/app/.venv`) at 96.2 MB because it contains the installed application dependencies.
+
+### Stretch Task: API Restart on Database Restart
+
+Added `restart: true` under the API service's database dependency.
+
+Tested using `docker compose restart db`. PostgreSQL restarted successfully, and Docker Compose automatically restarted the dependent API container. The API returned to a healthy state after startup.

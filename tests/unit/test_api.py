@@ -1,7 +1,13 @@
+from types import SimpleNamespace
+
 import pytest
 from pydantic import ValidationError
 
-from loanlens.api.deps import get_repository
+from loanlens.api.deps import (
+    get_app_settings,
+    get_db_session,
+    get_repository,
+)
 from loanlens.config import Settings
 
 
@@ -343,3 +349,54 @@ def test_invalid_sort_order_returns_422(client):
     )
 
     assert r.status_code == 422
+
+
+def test_get_app_settings_returns_app_settings():
+    settings = object()
+
+    request = SimpleNamespace(
+        app=SimpleNamespace(
+            state=SimpleNamespace(settings=settings),
+        ),
+    )
+
+    assert get_app_settings(request) is settings
+
+
+def test_get_repository_returns_repository():
+    from loanlens.db.repository import DocumentRepository
+
+    session = object()
+
+    repository = get_repository(session)
+
+    assert isinstance(repository, DocumentRepository)
+
+
+@pytest.mark.asyncio
+async def test_get_db_session_yields_session():
+    session = object()
+
+    class FakeSessionContext:
+        async def __aenter__(self):
+            return session
+
+        async def __aexit__(self, exc_type, exc_value, traceback):
+            return False
+
+    request = SimpleNamespace(
+        app=SimpleNamespace(
+            state=SimpleNamespace(
+                session_factory=FakeSessionContext,
+            ),
+        ),
+    )
+
+    generator = get_db_session(request)
+
+    yielded_session = await anext(generator)
+
+    assert yielded_session is session
+
+    with pytest.raises(StopAsyncIteration):
+        await anext(generator)
