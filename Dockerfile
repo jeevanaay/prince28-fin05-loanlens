@@ -50,4 +50,4 @@ USER app
 
 EXPOSE 8000
 
-CMD ["uvicorn", "loanlens.api.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn loanlens.api.main:create_app --factory --host 0.0.0.0 --port ${PORT:-8000}"]
