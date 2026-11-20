@@ -11,46 +11,93 @@ permissions:
   contents: read
 
 jobs:
-  smoke-test:
-    name: Production smoke test
-    if: ${{ github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+  deploy-and-smoke-test:
+    name: Deploy and production smoke test
+    if: >-
+      ${{
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main'
+      }}
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
 
     steps:
+      - name: Trigger Render deployment
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "RENDER_DEPLOY_HOOK secret is missing."
+            exit 1
+          fi
+
+          echo "Triggering Render deployment..."
+
+          curl --fail --silent --show-error \
+            --request POST \
+            "$RENDER_DEPLOY_HOOK"
+
+          echo "Render deployment trigger submitted."
+
       - name: Wait for production deployment and verify commit
         env:
           EXPECTED_COMMIT: ${{ github.event.workflow_run.head_sha }}
         run: |
           echo "Expected production commit: $EXPECTED_COMMIT"
+
           DEPLOYED_COMMIT=""
 
-          for attempt in $(seq 1 48); do
-            if curl -fsS https://prince28-fin05-loanlens.onrender.com/health -o /tmp/health.json; then
-              DEPLOYED_COMMIT=$(python -c "import json; print(json.load(open('/tmp/health.json')).get('commit', ''))")
+          for attempt in $(seq 1 60); do
+            if curl -fsS \
+              https://prince28-fin05-loanlens.onrender.com/health \
+              -o /tmp/health.json; then
 
-              echo "Currently deployed: $DEPLOYED_COMMIT"
+              DEPLOYED_COMMIT=$(python -c "
+          import json
+          data = json.load(open('/tmp/health.json'))
+          print(data.get('commit', ''))
+          ")
+
+              echo "Currently deployed: ${DEPLOYED_COMMIT:-commit unavailable}"
 
               if [ "$DEPLOYED_COMMIT" = "$EXPECTED_COMMIT" ]; then
+                echo "Expected commit is now live."
                 break
               fi
             fi
 
-            echo "Attempt $attempt/48: Waiting for expected deployment..."
+            echo "Attempt $attempt/60: Waiting for deployment..."
             sleep 10
           done
 
           if [ "$DEPLOYED_COMMIT" != "$EXPECTED_COMMIT" ]; then
-            echo "Smoke test failed: deployed commit does not match."
+            echo "Smoke test failed: expected commit was not deployed."
             exit 1
           fi
 
+      - name: Verify production database readiness
+        run: |
           echo "Checking database readiness..."
 
           for attempt in $(seq 1 12); do
-            if curl -fsS https://prince28-fin05-loanlens.onrender.com/ready -o /tmp/ready.json; then
-              if python -c "import json,sys; d=json.load(open('/tmp/ready.json')); sys.exit(0 if d.get('status') == 'ready' and d.get('checks', {}).get('database') is True else 1)"; then
-                echo "Smoke test passed"
+            if curl -fsS \
+              https://prince28-fin05-loanlens.onrender.com/ready \
+              -o /tmp/ready.json; then
+
+              if python -c "
+          import json
+          import sys
+
+          data = json.load(open('/tmp/ready.json'))
+          ready = (
+              data.get('status') == 'ready'
+              and data.get('checks', {}).get('database') is True
+          )
+
+          sys.exit(0 if ready else 1)
+          "; then
+                echo "Smoke test passed."
                 exit 0
               fi
             fi
@@ -59,5 +106,5 @@ jobs:
             sleep 10
           done
 
-          echo "Smoke test failed: database did not become ready."
+          echo "Smoke test failed: database is not ready."
           exit 1
