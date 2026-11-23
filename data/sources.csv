@@ -1,13 +1,13 @@
 ﻿# LoanLens initial source corpus
-# PM-Vidyalaxmi documents must be downloaded manually.
+# Licence describes reuse rights; robots.txt compliance is tracked separately in DATASET.md.
 url,source,licence,title
-https://www.dohe-education.gov.in/static/uploads/2026/02/c0a1cba1bd387f52bb3735542e679632.pdf,Ministry of Education,"Government document - reuse terms to be verified",PM-Vidyalaxmi Guidelines
-https://www.education.gov.in/sites/upload_files/mhrd/files/document-reports/pncftis.pdf,Ministry of Education,"Government document - reuse terms to be verified",PM-USP CSIS Public Notice
-https://sbi.bank.in/web/personal-banking/loans/education-loans/global-ed-vantage-scheme,SBI,"Official website - reuse terms to be verified",Global Ed-Vantage Scheme
-https://sbi.co.in/documents/16012/49183003/MITC-Global%2BEd-Vantage-%2BNov%272024.pdf/5df57fed-7229-40ca-b367-ccfd7d267264,SBI,"Official bank PDF - reuse terms to be verified",Global Ed-Vantage MITC November 2024
-https://sbi.bank.in/web/interest-rates/interest-rates/loan-schemes-interest-rates/education-loan-scheme,SBI,"Official website - reuse terms to be verified",Education Loan Interest Rates
-https://bankofbaroda.bank.in/loans/education-loan/baroda-scholar,Bank of Baroda,"Official website - reuse terms to be verified",Baroda Scholar Education Loan
-https://www.canarabank.bank.in/Education-Loan-Scheme-for-pursuing-Masters-Degree,Canara Bank,"Official website - reuse terms to be verified",Masters Degree Education Loan India and Abroad
-https://indianbank.bank.in/en/ib-education-loan-iba,Indian Bank,"Official website - reuse terms to be verified",IB Education Loan IBA
-https://www.pmvidyalaxmi.co.in/,PM-Vidyalaxmi Portal,"Manual access only - bot restrictions",PM-Vidyalaxmi Official Portal
-https://www.pib.gov.in/PressReleasePage.aspx?PRID=2290079,Press Information Bureau,"Government release - reuse terms to be verified",PM-Vidyalaxmi Press Release
+https://www.dohe-education.gov.in/static/uploads/2026/02/c0a1cba1bd387f52bb3735542e679632.pdf,Ministry of Education,"Reproduction permitted with source acknowledgement, subject to accuracy and third-party content exclusions",PM-Vidyalaxmi Guidelines
+https://www.education.gov.in/sites/upload_files/mhrd/files/document-reports/pncftis.pdf,Ministry of Education,"Reuse terms not verified; obtain permission or confirm applicable policy before redistribution",PM-USP CSIS Public Notice
+https://sbi.bank.in/web/personal-banking/loans/education-loans/global-ed-vantage-scheme,SBI,"Reuse terms not verified; obtain permission or confirm applicable policy before redistribution",Global Ed-Vantage Scheme
+https://sbi.co.in/documents/16012/49183003/MITC-Global%2BEd-Vantage%2BNov%272024.pdf/5df57fed-7229-40ca-b367-ccfd7d267264,SBI,"Reuse terms not verified; obtain permission or confirm applicable policy before redistribution",Global Ed-Vantage MITC November 2024
+https://sbi.bank.in/web/interest-rates/interest-rates/loan-schemes-interest-rates/education-loan-scheme,SBI,"Reuse terms not verified; obtain permission or confirm applicable policy before redistribution",Education Loan Interest Rates
+https://bankofbaroda.bank.in/loans/education-loan/baroda-scholar,Bank of Baroda,"Personal informational non-commercial use only; prior written permission required for wider reproduction or redistribution",Baroda Scholar Education Loan
+https://www.canarabank.bank.in/Education-Loan-Scheme-for-pursuing-Masters-Degree,Canara Bank,"Reproduction requires prior permission from Canara Bank; third-party material excluded",Masters Degree Education Loan India and Abroad
+https://indianbank.bank.in/en/ib-education-loan-iba,Indian Bank,"Prior written approval required for display or printing; other reuse rights not established",IB Education Loan IBA
+https://www.pmvidyalaxmi.co.in/,PM-Vidyalaxmi Portal,"Protected portal content; copying, downloading, storing or redistribution requires express written authorization, except as needed to use the service",PM-Vidyalaxmi Official Portal
+https://www.pib.gov.in/PressReleasePage.aspx?PRID=2290079,Press Information Bureau,"Reproduction permitted with prominent source acknowledgement and accurate, non-misleading use; excludes third-party material",PM-Vidyalaxmi Press Release
