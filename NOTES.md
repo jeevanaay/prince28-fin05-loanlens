@@ -1,3 +1,5 @@
+## D03 ? PostgreSQL
+
 # LoanLens â€” Day 3 Technical Notes
 
 ## 1. PostgreSQL Integration
@@ -342,6 +344,8 @@ The largest application layer is the copied Python virtual environment (`/app/.v
 Added `restart: true` under the API service's database dependency.
 
 Tested using `docker compose restart db`. PostgreSQL restarted successfully, and Docker Compose automatically restarted the dependent API container. The API returned to a healthy state after startup.
+
+## D05 ? CI/CD and Deployment
 
 # LoanLens — Day 5 Deployment and CI/CD Notes
 
