@@ -51,6 +51,32 @@ Each source must include:
   - Repayment: Up to 15 years, excluding moratorium
 - **Related scheme:** PM-USP CSIS provides full interest subvention for eligible students with annual family income up to ₹4.5 lakh pursuing approved technical/professional courses. This is a separate benefit with separate eligibility conditions.
 - **Last verified:** 2026-11-23
+### 3. Government of India — PM-USP Central Sector Interest Subsidy Scheme (CSIS)
+- Source name: Department of Higher Education, Ministry of Education
+- Scheme: PM-USP Central Sector Interest Subsidy Scheme
+- Source URL: https://www.education.gov.in/sites/upload_files/mhrd/files/document-reports/pncftis.pdf
+- Source type: Official Government of India public notice
+- Format: PDF
+- Relevant pages: PDF page 1
+- Last verified: 2026-11-23
+
+### 4. Bank of Baroda — Baroda Scholar
+- Source name: Bank of Baroda
+- Scheme: Baroda Scholar Education Loan
+- Source URL: https://bankofbaroda.bank.in/loans/education-loan/baroda-scholar
+- Source type: Official bank webpage
+- Format: HTML
+- Relevant sections: Eligibility, Interest Rates & Charges, Documents Required, Margin, Security, Repayment Holiday/Moratorium, Repayment Period
+- Last verified: 2026-11-23
+
+### 5. Canara Bank — Education Loan for Master's Degree Abroad
+- Source name: Canara Bank
+- Scheme: Education Loan Scheme for Pursuing Master's Degree in India & Abroad
+- Source URL: https://www.canarabank.bank.in/Education-Loan-Scheme-for-pursuing-Masters-Degree
+- Source type: Official bank webpage
+- Format: HTML
+- Relevant sections: Loan Quantum, Margin, Security, Repayment Tenure, Documents Required
+- Last verified: 2026-11-23
 
 ## Verification Notes
 
