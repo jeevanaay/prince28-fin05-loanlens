@@ -10,6 +10,7 @@ repos:
       - id: check-toml
       - id: check-added-large-files
         args: ["--maxkb=600"]
+        exclude: ^data/manifest\.jsonl$
       - id: detect-private-key
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -23,4 +24,4 @@ repos:
     rev: v1.5.0
     hooks:
       - id: detect-secrets
-        exclude: ^uv\.lock$
+        exclude: ^(uv\.lock|data/manifest\.jsonl)$

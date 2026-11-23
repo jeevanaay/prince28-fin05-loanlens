@@ -1,4 +1,4 @@
-# LoanLens — Dataset Source Register
+# LoanLens â€” Dataset Source Register
 
 ## 1. Official Source Portals
 
@@ -11,7 +11,7 @@
 
 ## 2. Documents Reviewed
 
-### 2.1 SBI — Global Ed-Vantage Scheme
+### 2.1 SBI â€” Global Ed-Vantage Scheme
 
 - **Source:** State Bank of India
 - **URL:** https://sbi.bank.in/web/personal-banking/loans/education-loans/global-ed-vantage-scheme
@@ -20,8 +20,8 @@
 - **Applicability:** Eligible full-time overseas education programmes
 
 **Key findings:**
-- Maximum loan amount: ₹3 crore.
-- Collateral-free loan facility: Up to ₹50 lakh for select premier institutions, subject to scheme conditions.
+- Maximum loan amount: â‚¹3 crore.
+- Collateral-free loan facility: Up to â‚¹50 lakh for select premier institutions, subject to scheme conditions.
 - Margin: 10% as stated in the November 2024 MITC; verify against the latest applicable terms.
 - Moratorium: Course period + 6 months.
 - Simple interest is charged during the course and moratorium period.
@@ -38,13 +38,13 @@
 
 **Key findings:**
 - Students admitted to eligible QHEIs in India may qualify, subject to scheme conditions.
-- Students with annual family income up to ₹8 lakh may qualify for 3% interest subvention.
-- Interest subvention is available on eligible education loans up to ₹10 lakh.
+- Students with annual family income up to â‚¹8 lakh may qualify for 3% interest subvention.
+- Interest subvention is available on eligible education loans up to â‚¹10 lakh.
 - The benefit applies during the moratorium period.
 - Moratorium: Course period + 1 year.
 - The scheme is not applicable to overseas MS programmes.
 
-### 2.3 IBA — Model Educational Loan Scheme (MELS), 2022
+### 2.3 IBA â€” Model Educational Loan Scheme (MELS), 2022
 
 - **Source:** Indian Banks' Association
 - **Document:** IBA Model Educational Loan Scheme, 2022
@@ -56,17 +56,17 @@
 **Key findings:**
 - Finance is based on the student's need and the bank's assessment; there is no single universal maximum loan amount.
 - Margin under the model scheme:
-  - Up to ₹4 lakh: No margin.
-  - Above ₹4 lakh up to ₹7.5 lakh: 5% for studies in India and 15% for studies abroad.
-  - Above ₹7.5 lakh: Subject to the lending bank's policy.
-- Collateral requirements generally apply above ₹7.5 lakh, subject to applicable credit-guarantee coverage and bank policy.
+  - Up to â‚¹4 lakh: No margin.
+  - Above â‚¹4 lakh up to â‚¹7.5 lakh: 5% for studies in India and 15% for studies abroad.
+  - Above â‚¹7.5 lakh: Subject to the lending bank's policy.
+- Collateral requirements generally apply above â‚¹7.5 lakh, subject to applicable credit-guarantee coverage and bank policy.
 - Moratorium: Course period + 1 year.
 - Repayment: Up to 15 years, excluding the moratorium period.
 - Simple interest is charged during the study and moratorium period.
 - Unpaid accrued interest may be added to the principal when repayment begins.
 - Actual terms may differ between banks because individual lenders can apply their own approved policies.
 
-### 2.4 PM-USP — Central Sector Interest Subsidy Scheme (CSIS)
+### 2.4 PM-USP â€” Central Sector Interest Subsidy Scheme (CSIS)
 
 - **Source:** Ministry of Education, Government of India
 - **Document:** PM-USP Central Sector Interest Subsidy Scheme Guidelines
@@ -76,14 +76,14 @@
 - **Applicability:** Eligible professional and technical courses in India, subject to scheme conditions.
 
 **Key findings:**
-- Annual family income limit: ₹4.5 lakh.
+- Annual family income limit: â‚¹4.5 lakh.
 - Provides 100% interest subsidy during the course period + 1 year.
-- Subsidy applies to eligible education loans up to ₹10 lakh.
+- Subsidy applies to eligible education loans up to â‚¹10 lakh.
 - Not applicable to overseas MS programmes.
-- Collateral-free loans up to ₹7.5 lakh are subject to applicable CGFSEL coverage and eligibility conditions.
+- Collateral-free loans up to â‚¹7.5 lakh are subject to applicable CGFSEL coverage and eligibility conditions.
 - Margin requirements must be checked against the applicable IBA model scheme and bank policy.
 
-### 2.5 Bank of Baroda — Baroda Scholar
+### 2.5 Bank of Baroda â€” Baroda Scholar
 
 - **Source:** Bank of Baroda
 - **URL:** https://bankofbaroda.bank.in/loans/education-loan/baroda-scholar
@@ -91,7 +91,7 @@
 - **Applicability:** Eligible higher education programmes abroad, subject to scheme conditions.
 
 **Key findings:**
-- Maximum loan amount: ₹150 lakh, as stated in the bank's scheme information.
+- Maximum loan amount: â‚¹150 lakh, as stated in the bank's scheme information.
 - Interest rate: Starting from BRLLR + 1.75; verify the current applicable rate separately.
 - Collateral requirements: Pending verification.
 - Margin requirements: Pending verification.
@@ -144,3 +144,30 @@ Every LoanLens record must contain the following fields:
 - Store descriptive rules as strings.
 - Use `null` for unavailable values.
 - Do not add unsupported values merely to complete a record.
+
+## 6. Initial Collection Report — 23 November 2026
+
+Generated using `scripts/dataset_report.py`.
+
+| Metric | Result |
+|---|---:|
+| Manifest entries | 11 |
+| Successfully downloaded documents | 8 |
+| Total downloaded size | 3.35 MB |
+| PDF pages detected | 28 |
+| Source organisations | 6 |
+
+### Source breakdown
+
+| Source | Downloaded documents |
+|---|---:|
+| Ministry of Education | 1 |
+| SBI | 3 |
+| Canara Bank | 1 |
+| Bank of Baroda | 1 |
+| Indian Bank | 1 |
+| Press Information Bureau | 1 |
+
+Raw documents are stored locally in `data/raw/` and excluded from Git. The committed `data/manifest.jsonl` records collection metadata and document hashes.
+
+These figures describe the current collection only. They do not represent the final target corpus.

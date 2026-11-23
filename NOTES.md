@@ -611,3 +611,164 @@ LoanLens successfully completed the PostgreSQL integration, Docker containerisat
 The production rollback and recovery drill was also executed on November 21, 2026, using Render's deployment history.
 
 The application was subsequently deployed successfully through Render Deploy Hooks, with the latest recorded production deployment being commit `cf18d2a` on November 23, 2026.
+
+---
+
+# D06 — LoanLens: Document Collection and Dataset Capacity
+
+## 24. Document Collection Pipeline
+
+Implemented document collection under `src/loanlens/ingest/fetch.py`.
+
+Collection methods exposed through `scripts/fetch.py`:
+
+| Method | Purpose |
+|---|---|
+| `urls` | Collect URLs from `data/sources.csv` |
+| `sitemap` | Discover documents from sitemaps |
+| `repo` | Collect documents from public Git repositories |
+| `manual` | Register manually downloaded documents |
+
+### Collection safeguards
+
+- HTTP client: httpx
+- Robots policy: Protego
+- PDF parsing: pypdf
+- Maximum concurrency: 4
+- Default per-host delay: 0.5 seconds
+- Maximum retries: 3
+- Request timeout: 45 seconds
+- Failed robots retrieval: fail closed
+- Completed documents: skipped when already present
+- Partial downloads: temporary `.part` files with atomic replacement
+
+## 25. Source Register and Collection
+
+Source register: `data/sources.csv`
+
+The register contains 10 source entries covering government schemes and education-loan information from SBI, Bank of Baroda, Canara Bank and Indian Bank.
+
+PM-Vidyalaxmi documents requiring manual collection are registered through the manual collection command rather than automatically crawled.
+
+## 26. Dataset Manifest and Storage
+
+Manifest: `data/manifest.jsonl`
+
+Raw documents: `data/raw/`
+
+- Manifest records contain source metadata, retrieval status, file path and SHA-256 hash.
+- Raw documents are excluded from Git.
+- The manifest and source register are retained for reproducibility.
+- Existing reference documents are stored separately in `data/source_docs/`.
+
+## 27. Initial Dataset Measurement
+
+Measurement date: November 23, 2026
+
+Generated using:
+
+```powershell
+uv run python scripts/dataset_report.py
+```
+
+Measured results:
+
+| Metric | Result |
+|---|---:|
+| Manifest entries | 11 |
+| Successfully downloaded documents | 8 |
+| Total downloaded size | 3,510,332 bytes |
+| Total size | 3.35 MB |
+| PDF pages detected | 28 |
+| Source organisations | 6 |
+
+Source distribution:
+
+| Source | Documents |
+|---|---:|
+| Ministry of Education | 1 |
+| SBI | 3 |
+| Canara Bank | 1 |
+| Bank of Baroda | 1 |
+| Indian Bank | 1 |
+| Press Information Bureau | 1 |
+
+PDF detection uses the `%PDF-` file signature rather than relying on file extensions.
+
+## 28. Dataset Capacity Planning
+
+Documentation: `docs/CAPACITY.md`
+
+- Initial source register target: 10 URLs.
+- Expanded corpus target: 1,500+ pages.
+- Storage projections are estimates based on the measured initial collection.
+- Additional bank circulars, FAQs and scheme documents remain to be collected.
+
+## 29. Automated Tests
+
+Test file: `tests/unit/test_fetch.py`
+
+New downloader tests: 19
+
+Verification:
+
+```powershell
+uv run pytest tests/unit/test_fetch.py -q
+```
+
+Result:
+
+```text
+19 passed
+```
+
+Full project test suite:
+
+```powershell
+uv run poe test
+```
+
+Result:
+
+```text
+55 passed
+```
+
+## 30. Quality Gate Verification
+
+Command:
+
+```powershell
+uv run pre-commit run --all-files
+```
+
+Results:
+
+- Trailing whitespace: Passed
+- End-of-file checks: Passed
+- YAML validation: Passed
+- TOML validation: Passed
+- Large-file checks: Passed
+- Private-key detection: Passed
+- Ruff lint: Passed
+- Ruff formatting: Passed
+- Secret detection: Passed
+
+## 31. D06 Verification Summary
+
+| Requirement | Result |
+|---|---|
+| Document collection module | Implemented |
+| URL, sitemap, repository and manual collection interfaces | Implemented |
+| Robots.txt compliance | Implemented |
+| Retry and host-delay controls | Implemented |
+| Manifest and SHA-256 tracking | Implemented |
+| Dataset reporting | Implemented |
+| Initial source register | Created |
+| Initial documents collected | 8 |
+| PDF pages detected | 28 |
+| New unit tests | 19 passed |
+| Full project tests | 55 passed |
+| Pre-commit hooks | All passed |
+
+**D06 Status:** Initial document collection pipeline, dataset reporting, capacity documentation and automated tests are implemented. The expanded 1,500+ page corpus and remaining source collection are still pending.

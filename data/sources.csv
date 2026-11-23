@@ -1,0 +1,13 @@
+﻿# LoanLens initial source corpus
+# PM-Vidyalaxmi documents must be downloaded manually.
+url,source,licence,title
+https://www.dohe-education.gov.in/static/uploads/2026/02/c0a1cba1bd387f52bb3735542e679632.pdf,Ministry of Education,"Government document - reuse terms to be verified",PM-Vidyalaxmi Guidelines
+https://www.education.gov.in/sites/upload_files/mhrd/files/document-reports/pncftis.pdf,Ministry of Education,"Government document - reuse terms to be verified",PM-USP CSIS Public Notice
+https://sbi.bank.in/web/personal-banking/loans/education-loans/global-ed-vantage-scheme,SBI,"Official website - reuse terms to be verified",Global Ed-Vantage Scheme
+https://sbi.co.in/documents/16012/49183003/MITC-Global%2BEd-Vantage-%2BNov%272024.pdf/5df57fed-7229-40ca-b367-ccfd7d267264,SBI,"Official bank PDF - reuse terms to be verified",Global Ed-Vantage MITC November 2024
+https://sbi.bank.in/web/interest-rates/interest-rates/loan-schemes-interest-rates/education-loan-scheme,SBI,"Official website - reuse terms to be verified",Education Loan Interest Rates
+https://bankofbaroda.bank.in/loans/education-loan/baroda-scholar,Bank of Baroda,"Official website - reuse terms to be verified",Baroda Scholar Education Loan
+https://www.canarabank.bank.in/Education-Loan-Scheme-for-pursuing-Masters-Degree,Canara Bank,"Official website - reuse terms to be verified",Masters Degree Education Loan India and Abroad
+https://indianbank.bank.in/en/ib-education-loan-iba,Indian Bank,"Official website - reuse terms to be verified",IB Education Loan IBA
+https://www.pmvidyalaxmi.co.in/,PM-Vidyalaxmi Portal,"Manual access only - bot restrictions",PM-Vidyalaxmi Official Portal
+https://www.pib.gov.in/PressReleasePage.aspx?PRID=2290079,Press Information Bureau,"Government release - reuse terms to be verified",PM-Vidyalaxmi Press Release
