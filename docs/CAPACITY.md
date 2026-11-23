@@ -88,8 +88,26 @@ Raw source documents remain outside Git to avoid repository bloat and unnecessar
 - Some sources require manual document collection.
 - Reuse terms remain unverified for several sources.
 - Storage projections are estimates, not measured future requirements.
+## 8. Capacity Assessment — Four Key Answers
 
-## 8. Capacity Reporting
+### 1. How much data can the current pipeline handle?
+
+The current measured baseline is 8 successfully downloaded documents, occupying 3.35 MB and containing 28 detected PDF pages. The pipeline supports up to 4 concurrent downloads. The 1,500+ page target remains outstanding, so larger-scale capacity still needs validation.
+
+### 2. How much storage is required for the expanded corpus?
+
+The current average document size is approximately 0.42 MB. Based on this average, 100 documents would require approximately 42 MB. This is a rough projection; the actual storage requirement for 1,500+ pages must be measured after collecting a representative corpus.
+
+### 3. What limits collection throughput?
+
+Collection throughput is controlled by a maximum concurrency of 4, a default per-host delay of 0.5 seconds, a 45-second request timeout and up to 3 retry attempts. Robots.txt restrictions and manual-only sources can further limit collection speed.
+
+### 4. How can the corpus scale while preserving reliability and compliance?
+
+Scale collection in batches, retain SHA-256 hashes and manifest records, skip completed downloads, and use temporary files with atomic replacement. Respect robots.txt and access restrictions, verify reuse permissions, and keep raw documents outside Git unless redistribution is permitted.
+
+---
+## 9. Capacity Reporting
 
 Generate the latest collection report with:
 
