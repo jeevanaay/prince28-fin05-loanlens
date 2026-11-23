@@ -1,4 +1,4 @@
-# LoanLens — Day 3 Technical Notes
+## D03 — LoanLens: PostgreSQL Integration (Day 3 Build Lab)
 
 ## 1. PostgreSQL Integration
 
@@ -8,26 +8,36 @@
 - Migration tool: Alembic
 - Metadata storage: PostgreSQL JSONB
 
-## 2. Migration History
+## 2. Migration History and Verification
 
-Two Alembic migrations were created and applied successfully.
+Three Alembic migrations were created and applied across the PostgreSQL and Docker build stages.
 
-| Revision | Description |
-|---|---|
-| `109f18291bfb` | Create documents and pages |
-| `0899d658d997` | Add metadata GIN index |
+| Revision | Description | Build stage |
+|---|---|---|
+| `109f18291bfb` | Create documents and pages | D03 |
+| `0899d658d997` | Add metadata GIN index | D03 |
+| `07a82ad9cd94` | Add typed lender column and B-tree index | D04 |
 
-Verification:
+Migration verification command:
+
+```powershell
+uv run alembic current
+uv run alembic history
+```
+
+Latest migration:
 
 ```text
-0899d658d997 (head)
+07a82ad9cd94 (head)
 ```
 
 Migration upgrade, downgrade and re-upgrade were tested successfully.
 
+The migration history was also verified through Docker Compose during D04.
+
 ## 3. Data Loader Verification
 
-The loader was tested for idempotency using 20 sample records.
+The PostgreSQL data loader at `scripts/load_db.py` was tested using 20 sample records.
 
 First execution:
 
@@ -49,7 +59,9 @@ records=20 inserted=0 updated=1 unchanged=19
 
 The loader correctly identifies new, modified and unchanged records.
 
-## 4. PostgreSQL GIN Index Verification
+Repeated execution does not create duplicate records, confirming idempotent behaviour.
+
+## 4. PostgreSQL GIN Index and EXPLAIN Verification
 
 Index:
 
@@ -57,9 +69,9 @@ Index:
 ix_documents_metadata_gin
 ```
 
-Index type: GIN
-
-Operator class: `jsonb_path_ops`
+- Index type: GIN
+- Operator class: `jsonb_path_ops`
+- Indexed column: `documents.metadata`
 
 Diagnostic query:
 
@@ -79,53 +91,26 @@ Bitmap Heap Scan on documents
        Index Cond: (metadata @> '{"lender": "State Bank of India"}'::jsonb)
 ```
 
-**Observation:** PostgreSQL successfully used `ix_documents_metadata_gin` for the JSONB containment query.
+Observation:
 
-Note: Sequential scans were disabled for this diagnostic query to verify index usability.
+PostgreSQL successfully used the GIN index `ix_documents_metadata_gin` for the JSONB containment query.
 
-## 5. Test Results
+Sequential scans were disabled for this diagnostic query to verify index usability.
 
-| Test category | Passed |
-|---|---:|
-| API tests | 16 |
-| PostgreSQL integration tests | 3 |
-| Total | 19 |
+## 5. D03 Verification Summary
 
-Command:
+| Requirement | Result |
+|---|---|
+| PostgreSQL integration | Completed |
+| SQLAlchemy async integration | Verified |
+| Alembic migrations | Verified |
+| Migration upgrade and downgrade | Tested |
+| Sample records loaded | 20 records |
+| Loader idempotency | Verified |
+| GIN index creation | Verified |
+| JSONB EXPLAIN query | Verified |
 
-```powershell
-python -m pytest -v
-```
-
-Result:
-
-```text
-19 passed
-```
-
-## 6. Code Quality
-
-- Ruff lint: Passed
-- Ruff formatting: Passed
-- Pre-commit hooks: Passed
-- Secret detection: Passed
-
-## 7. GitHub Integration
-
-- Feature branch: `feat/day-03-postgres`
-- Pull request: #2
-- Status: Merged and closed
-- Main branch: Updated and synchronised
-- Working tree: Clean
-
-Commit:
-
-```text
-0893537
-feat: integrate PostgreSQL database with SQLAlchemy and Alembic
-```
-
----
+**D03 Outcome:** PostgreSQL integration, database migrations, idempotent data loading and GIN index verification were successfully completed.
 
 # LoanLens — Day 4 Technical Notes
 
@@ -348,7 +333,7 @@ Tested using `docker compose restart db`. PostgreSQL restarted successfully, and
 
 ---
 
-# LoanLens — Day 5 Deployment and CI/CD Notes
+## D05 — LoanLens: Deployment and CI/CD (Day 5 Build Lab)
 
 ## 16. GitHub Actions CI/CD
 
@@ -531,7 +516,56 @@ The drill demonstrated that a previous successful deployment could be restored t
 - Render rollback changes the deployed application version; it does not automatically reverse database migrations.
 - Database schema compatibility must be checked before rolling back application code.
 - Database migrations should remain backward-compatible with the previous application version wherever possible.
+## 21A. Deployment Lead Time Verification
 
+Deployment platform: Render
+
+Deployment trigger: GitHub Actions CD workflow using Render Deploy Hook.
+
+### Latest Recorded Deployment
+
+| Metric | Value |
+|---|---|
+| Commit | `cf18d2a` |
+| Pull request | #20 |
+| Deployment date | November 23, 2026 |
+| Deployment started | 10:32 AM |
+| Deployment became live | 10:33 AM |
+| Deployment lead time | Approximately 1 minute |
+| Trigger | Render Deploy Hook |
+| Result | Successful |
+
+### Previous Deployment
+
+| Metric | Value |
+|---|---|
+| Commit | `0f540b6` |
+| Pull request | #19 |
+| Deployment started | 10:13 AM |
+| Deployment became live | 10:14 AM |
+| Deployment lead time | Approximately 1 minute |
+| Result | Successful |
+
+### CI Pipeline Duration
+
+The latest recorded successful GitHub Actions CI workflow was:
+
+- Workflow: LoanLens CI
+- Run: #12
+- Commit: `9e8a362`
+- Branch: `main`
+- Duration: 45 seconds
+- Status: Success
+
+### Lead Time Observation
+
+The recorded production deployments took approximately one minute from deployment initiation to becoming live.
+
+The CI workflow completed in 45 seconds in the recorded run. CI execution time and production deployment lead time are separate measurements.
+
+These results demonstrate that the automated CI/CD and production deployment pipeline can deliver application changes to production quickly.
+
+**D05 Outcome:** CI/CD automation, production deployment, rollback and recovery verification were successfully completed.
 ## 22. Week 1 Git Milestone
 
 Git tag:

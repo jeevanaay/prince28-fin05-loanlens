@@ -13,6 +13,7 @@ permissions:
 jobs:
   deploy-and-smoke-test:
     name: Migrate, deploy and smoke test
+
     if: >-
       ${{
         github.event.workflow_run.event == 'push' &&
@@ -20,6 +21,7 @@ jobs:
         github.event.workflow_run.head_branch == 'main' &&
         github.event.workflow_run.head_repository.full_name == github.repository
       }}
+
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -45,6 +47,8 @@ jobs:
           APP_ENV: production
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
+          set -euo pipefail
+
           if [ -z "$DATABASE_URL" ]; then
             echo "DATABASE_URL secret is missing."
             exit 1
@@ -58,6 +62,8 @@ jobs:
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
+          set -euo pipefail
+
           if [ -z "$RENDER_DEPLOY_HOOK" ]; then
             echo "RENDER_DEPLOY_HOOK secret is missing."
             exit 1
@@ -69,12 +75,14 @@ jobs:
             --request POST \
             "$RENDER_DEPLOY_HOOK"
 
-          echo "Render deployment trigger submitted."
+          echo "Render deployment request submitted."
 
       - name: Wait for production deployment and verify commit
         env:
           EXPECTED_COMMIT: ${{ github.event.workflow_run.head_sha }}
         run: |
+          set -euo pipefail
+
           echo "Expected production commit: $EXPECTED_COMMIT"
 
           DEPLOYED_COMMIT=""
@@ -109,6 +117,8 @@ jobs:
 
       - name: Verify production database readiness
         run: |
+          set -euo pipefail
+
           echo "Checking database readiness..."
 
           for attempt in $(seq 1 12); do
@@ -120,7 +130,9 @@ jobs:
           import json
           import sys
 
-          data = json.load(open('/tmp/ready.json'))
+          with open('/tmp/ready.json') as file:
+              data = json.load(file)
+
           ready = (
               data.get('status') == 'ready'
               and data.get('checks', {}).get('database') is True
@@ -128,7 +140,7 @@ jobs:
 
           sys.exit(0 if ready else 1)
           "; then
-                echo "Smoke test passed."
+                echo "Production smoke tests passed."
                 exit 0
               fi
             fi
