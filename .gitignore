@@ -28,3 +28,7 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+
+# Local source documents and incomplete downloads
+data/source_docs/
+*.part
