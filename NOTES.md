@@ -1,4 +1,4 @@
-## D03 — LoanLens: PostgreSQL Integration (Day 3 Build Lab)
+﻿## D03 â€” LoanLens: PostgreSQL Integration (Day 3 Build Lab)
 
 ## 1. PostgreSQL Integration
 
@@ -112,7 +112,7 @@ Sequential scans were disabled for this diagnostic query to verify index usabili
 
 **D03 Outcome:** PostgreSQL integration, database migrations, idempotent data loading and GIN index verification were successfully completed.
 
-# LoanLens — Day 4 Technical Notes
+# LoanLens â€” Day 4 Technical Notes
 
 ## 8. Docker Configuration
 
@@ -192,7 +192,7 @@ Migration command:
 docker compose logs migrate
 ```
 
-Seed loader — first execution:
+Seed loader â€” first execution:
 
 ```text
 records=20 inserted=20 updated=0 unchanged=0
@@ -333,7 +333,7 @@ Tested using `docker compose restart db`. PostgreSQL restarted successfully, and
 
 ---
 
-## D05 — LoanLens: Deployment and CI/CD (Day 5 Build Lab)
+## D05 â€” LoanLens: Deployment and CI/CD (Day 5 Build Lab)
 
 ## 16. GitHub Actions CI/CD
 
@@ -381,7 +381,7 @@ Implemented least-privilege permissions.
 
 Security improvement:
 
-- PR #13 — Security: Scope package write permission to Docker job.
+- PR #13 â€” Security: Scope package write permission to Docker job.
 - Status: Merged.
 - Commit: `9e8a362`.
 
@@ -467,7 +467,7 @@ Rollback platform: Render
 
 Verify that the production service can be rolled back to a previous successful deployment and subsequently restored to a newer deployment.
 
-### Rollback and Recovery Execution — November 21, 2026
+### Rollback and Recovery Execution â€” November 21, 2026
 
 Two rollback operations were recorded in the Render deployment history.
 
@@ -614,7 +614,7 @@ The application was subsequently deployed successfully through Render Deploy Hoo
 
 ---
 
-# D06 — LoanLens: Document Collection and Dataset Capacity
+# D06 â€” LoanLens: Document Collection and Dataset Capacity
 
 ## 24. Document Collection Pipeline
 
@@ -731,7 +731,7 @@ uv run poe test
 Result:
 
 ```text
-55 passed
+58 passed
 ```
 
 ## 30. Quality Gate Verification
@@ -768,7 +768,30 @@ Results:
 | Initial documents collected | 8 |
 | PDF pages detected | 28 |
 | New unit tests | 19 passed |
-| Full project tests | 55 passed |
+| Full project tests | 58 passed |
 | Pre-commit hooks | All passed |
 
 **D06 Status:** Initial document collection pipeline, dataset reporting, capacity documentation and automated tests are implemented. The expanded 1,500+ page corpus and remaining source collection are still pending.
+
+
+## 32. Forced Interruption and Resume Verification
+
+A controlled local HTTP-server test verified recovery after forcibly
+interrupting the document collection process with Ctrl+C.
+
+| Metric | Result |
+|---|---:|
+| Documents downloaded before interruption | 1 |
+| Completed documents skipped after restart | 1 |
+| New documents downloaded after restart | 2 |
+| Total documents available after resume | 3 |
+
+Verification:
+- Document 1 remained downloaded with its original SHA-256 hash.
+- Document 2 was interrupted before completion.
+- The restarted fetch skipped Document 1.
+- Documents 2 and 3 downloaded successfully.
+- No duplicate download of Document 1 occurred.
+
+**Result:** Forced interruption and restart/resume test passed using
+an isolated local test server and temporary test data.
