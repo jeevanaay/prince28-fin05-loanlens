@@ -196,3 +196,44 @@ Generated using `scripts/dataset_report.py`.
 Raw documents are stored locally in `data/raw/` and excluded from Git. The committed `data/manifest.jsonl` records collection metadata and document hashes.
 
 These figures describe the current collection only. They do not represent the final target corpus.
+
+## Source compliance and verification
+
+Checked on: 2026-11-23
+
+### Robots.txt verification
+
+| Domain | Result | Collection status |
+|---|---|---|
+| dohe-education.gov.in | `Allow: /` verified | Robots policy permits crawling |
+| education.gov.in | `Allow: /` verified | Robots policy permits crawling |
+| sbi.bank.in | No general disallow rule verified | Robots policy permits crawling |
+| sbi.co.in | Redirects to sbi.bank.in robots.txt | Same policy as sbi.bank.in |
+| bankofbaroda.bank.in | General PDF paths disallowed; source HTML path is not covered by that rule | Do not fetch disallowed PDF paths |
+| canarabank.bank.in | robots.txt could not be verified | Automated collection not cleared |
+| indianbank.bank.in | robots.txt could not be verified | Automated collection not cleared |
+| pmvidyalaxmi.co.in | robots.txt could not be verified | Automated collection not cleared |
+| pib.gov.in | robots.txt could not be verified | Automated collection not cleared |
+
+An inaccessible robots.txt file is not proof that crawling is prohibited. It means permission to automate collection has not been established.
+
+### Reuse and licensing status
+
+- DoHE: reproduction permitted with attribution, subject to accuracy and third-party content exclusions.
+- Ministry of Education (education.gov.in): applicable reuse terms remain unverified.
+- SBI: applicable reuse terms remain unverified.
+- Bank of Baroda: personal, informational and non-commercial use only; wider reproduction or redistribution requires prior written permission.
+- Canara Bank: reproduction requires prior permission; third-party material is excluded.
+- Indian Bank: prior written approval required for display or printing; other reuse rights remain unestablished.
+- PM-Vidyalaxmi portal: protected content; copying, downloading, storing or redistribution requires express written authorization, except as necessary to use the service.
+- PIB: reproduction permitted with prominent attribution and accurate, non-misleading use; third-party material is excluded.
+
+### Outstanding compliance gaps
+
+1. Confirm robots.txt access and applicable collection rules for Canara Bank, Indian Bank, PM-Vidyalaxmi and PIB before automated collection.
+2. Obtain or verify applicable reuse terms for Ministry of Education and SBI materials before redistribution.
+3. Obtain written permission where required by Canara Bank, Indian Bank, Bank of Baroda or PM-Vidyalaxmi terms.
+4. Check individual documents for third-party copyright notices before reusing their contents.
+5. Historical downloads cannot be certified as compliant solely from the current robots.txt checks. Their original access conditions have not all been independently established.
+
+Until these gaps are resolved, do not treat the affected sources as cleared for automated collection or redistribution.
