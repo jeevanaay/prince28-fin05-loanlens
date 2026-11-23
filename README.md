@@ -540,3 +540,24 @@ The next development phase focuses on deployment, a live API and expanding the l
 ---
 
 **Built as an education-loan information assistant project.**
+
+## Run locally in one command
+
+### Prerequisites
+- Docker Desktop installed and running
+- Git installed
+
+### Start LoanLens
+``powershell
+docker compose up --build -d
+``n
+### Access the application
+- API: http://localhost:8000
+- Swagger: http://localhost:8000/docs
+- Health: http://localhost:8000/health
+- Readiness: http://localhost:8000/ready
+
+### Stop LoanLens
+``powershell
+docker compose down
+``

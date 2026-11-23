@@ -17,6 +17,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 settings = get_settings()
+database_url = settings.database_url
 
 # Use TEST_DATABASE_URL only when explicitly requested.
 use_test_db = os.getenv("LOANLENS_ALEMBIC_USE_TEST_DB") == "1"
