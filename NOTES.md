@@ -1,6 +1,4 @@
-## D03 ? PostgreSQL
-
-# LoanLens â€” Day 3 Technical Notes
+# LoanLens — Day 3 Technical Notes
 
 ## 1. PostgreSQL Integration
 
@@ -127,7 +125,9 @@ Commit:
 feat: integrate PostgreSQL database with SQLAlchemy and Alembic
 ```
 
-# LoanLens â€” Day 4 Technical Notes
+---
+
+# LoanLens — Day 4 Technical Notes
 
 ## 8. Docker Configuration
 
@@ -207,7 +207,7 @@ Migration command:
 docker compose logs migrate
 ```
 
-Seed loader â€” first execution:
+Seed loader — first execution:
 
 ```text
 records=20 inserted=20 updated=0 unchanged=0
@@ -279,7 +279,7 @@ Integration test database cleanup was verified:
 ```sql
 SELECT datname
 FROM pg_database
-WHERE datname LIKE 'loanlens_test_%';
+WHERE datname LIKE 'loanlens_test\_%';
 ```
 
 Result:
@@ -335,6 +335,7 @@ Modules with the largest coverage gaps:
 | Integration tests | 9 passed |
 | Temporary database cleanup | Verified |
 | Coverage report | 72% |
+
 ### Stretch Task: Docker Layer Analysis
 
 The largest application layer is the copied Python virtual environment (`/app/.venv`) at 96.2 MB because it contains the installed application dependencies.
@@ -345,7 +346,7 @@ Added `restart: true` under the API service's database dependency.
 
 Tested using `docker compose restart db`. PostgreSQL restarted successfully, and Docker Compose automatically restarted the dependent API container. The API returned to a healthy state after startup.
 
-## D05 ? CI/CD and Deployment
+---
 
 # LoanLens — Day 5 Deployment and CI/CD Notes
 
@@ -361,13 +362,15 @@ Pipeline stages:
 | Build and publish Docker image | Build Docker image and publish to GHCR |
 
 Verification:
+
 - Ruff lint: Passed
 - Ruff formatting: Passed
 - Unit tests: 35 passed
 - Docker build: Passed
 - GHCR image publishing: Verified
 
-Latest successful workflow:
+Latest successful workflow recorded during the initial Day 5 verification:
+
 - Workflow: LoanLens CI
 - Run: #12
 - Commit: `9e8a362`
@@ -387,11 +390,12 @@ Implemented least-privilege permissions.
 
 - Docker publishing permission is restricted to the Docker job.
 - GHCR authentication uses the automatically provided `GITHUB_TOKEN`.
-- Repository secrets: None.
-- Environment secrets: None.
-- Render and Neon credentials remain configured in Render.
+- CI Docker publishing does not require a separately configured GitHub personal access token.
+- The CD workflow references `DATABASE_URL` and `RENDER_DEPLOY_HOOK` as GitHub Actions secrets.
+- Production database and deployment credentials are not hardcoded in workflow files.
 
 Security improvement:
+
 - PR #13 — Security: Scope package write permission to Docker job.
 - Status: Merged.
 - Commit: `9e8a362`.
@@ -399,6 +403,7 @@ Security improvement:
 ## 18. Main Branch Protection
 
 GitHub ruleset:
+
 - Ruleset name: `main`
 - Enforcement: Active
 - Target: Default branch (`main`)
@@ -415,6 +420,7 @@ Hosting: Render Web Service
 Service: `prince28-fin05-loanlens`
 
 Production URL:
+
 https://prince28-fin05-loanlens.onrender.com
 
 Database: Neon PostgreSQL
@@ -427,14 +433,33 @@ Production endpoints:
 | `/ready` | Database readiness |
 | `/docs` | Swagger API documentation |
 
-Latest production deployment:
-- Commit: `9e8a362`
-- Status: Live
-- Deployment duration: 46.6 seconds
+### Latest Production Deployment
 
-Health verification:
-- `/health`: HTTP 200, status `ok`.
-- `/ready`: Previously verified as `ready`, database connected.
+- Commit: `cf18d2a`
+- Pull request: #20
+- Description: `docs: add official education loan source registry`
+- Deployment date: November 23, 2026
+- Deployment started: 10:32 AM
+- Deployment live: 10:33 AM
+- Trigger: Render Deploy Hook
+- Status: Live
+
+Previous deployment:
+
+- Commit: `0f540b6`
+- Pull request: #19
+- Description: `chore: complete Week 1 validation and deployment checks`
+- Deployment date: November 23, 2026
+- Deployment started: 10:13 AM
+- Deployment live: 10:14 AM
+- Trigger: Render Deploy Hook
+- Status: Live
+
+### Production Health Verification
+
+- `/health`: Previously verified as HTTP 200 with status `ok`.
+- `/ready`: Previously verified as `ready`, with the database connected.
+- Production deployment history confirms successful deployments of the latest commits.
 
 ## 20. Uptime Monitoring
 
@@ -444,56 +469,83 @@ Monitoring service: UptimeRobot
 - Monitoring status: UP
 - Monitoring interval: 5 minutes
 - Public status page:
-  https://stats.uptimerobot.com/0ObUsW7ASp
+
+https://stats.uptimerobot.com/0ObUsW7ASp
 
 The health endpoint supports both GET and HEAD requests.
 
-## 21. Rollback Readiness
+## 21. Production Rollback and Recovery Drill
 
 Rollback platform: Render
 
-Current production deployment:
-- Commit: `9e8a362`
-- Status: Live
+### Objective
 
-Previous successful deployment:
-- Commit: `c5a0556`
-- Deployment duration: 51.1 seconds
-- Status: Deploy succeeded
-- Deployment date: November 20, 2026
+Verify that the production service can be rolled back to a previous successful deployment and subsequently restored to a newer deployment.
 
-Rollback readiness verification:
-- Previous successful deployment visible in Render deployment history.
-- Render rollback action available for the previous deployment.
-- Production health endpoint verified after the latest deployment.
+### Rollback and Recovery Execution — November 21, 2026
 
-Rollback procedure:
-1. Open the Render service deployment history.
-2. Identify the last known-good deployment.
-3. Open its deployment details.
-4. Use the Rollback action if recovery is required.
-5. Verify `/health` and `/ready` after rollback.
-6. Check application logs and confirm database connectivity.
+Two rollback operations were recorded in the Render deployment history.
 
-Important:
-- No production rollback was executed during this verification.
-- The rollback action and previous successful deployment were inspected.
+| Time | Operation | Deployment / Commit | Result |
+|---|---|---|---|
+| 1:19 AM | Rollback initiated | Previous deployment `dep-dc04iirrjlhs7388uug0` | Initiated |
+| 1:20 AM | Rollback deployment live | `9323df8` | Successful |
+| 1:22 AM | Rollback initiated | Previous deployment `dep-dc08vimtlv9c739h201g` | Initiated |
+| 1:22 AM | Recovery deployment live | `6cbf87c` | Successful |
+
+### Deployment Details
+
+**Rollback deployment**
+
+- Commit: `9323df8`
+- Pull request: #14
+- Description: `Docs: Add Day 5 deployment, CI/CD and rollback documentation`
+- Rollback duration: 25.8 seconds
+- Status: Deploy live
+
+**Recovery deployment**
+
+- Commit: `6cbf87c`
+- Pull request: #17
+- Description: `feat: trigger Render deployment from GitHub CD`
+- Recovery duration: 20.2 seconds
+- Status: Deploy live
+
+### Verification
+
+- Render deployment history recorded both rollback operations.
+- Both rollback and recovery deployments were reported as successful and live.
+- Production `/health` endpoint returned HTTP 200.
+- The previous deployment was restored successfully.
+- The newer deployment was subsequently restored successfully.
+- Database readiness was checked as part of the production verification.
+
+### Rollback Outcome
+
+The production rollback and recovery drill was successfully completed on November 21, 2026.
+
+The drill demonstrated that a previous successful deployment could be restored through the Render dashboard and that a subsequent deployment could bring the application forward again.
+
+### Important Database Consideration
+
 - Render rollback changes the deployed application version; it does not automatically reverse database migrations.
 - Database schema compatibility must be checked before rolling back application code.
-
-Result: Rollback readiness inspected; actual rollback drill not performed.
+- Database migrations should remain backward-compatible with the previous application version wherever possible.
 
 ## 22. Week 1 Git Milestone
 
 Git tag:
+
 `week-1`
 
 Description:
+
 `LoanLens Week 1: Backend, Docker, CI/CD and production deployment`
 
 Tag was created, pushed and verified on GitHub.
 
 Repository:
+
 https://github.com/jeevanaay/prince28-fin05-loanlens
 
 ## 23. Day 5 Verification Summary
@@ -510,27 +562,18 @@ https://github.com/jeevanaay/prince28-fin05-loanlens
 | UptimeRobot monitoring | UP |
 | README production links and badges | Updated |
 | Week 1 Git tag | Pushed |
-| Rollback readiness | Inspected |
-| Actual rollback execution | Not performed |
+| Previous deployment availability | Verified |
+| Actual production rollback | Successfully executed |
+| Recovery deployment | Successfully executed |
+| Production health verification | Verified |
+| Rollback and recovery drill | Completed |
 
+---
 
-## Rollback Drill — November 21, 2026
+# Overall Week 1 Verification
 
-### Objective
-Verify that the production service can be rolled back to a previous successful deployment and restored to the latest version.
+LoanLens successfully completed the PostgreSQL integration, Docker containerisation, automated testing, CI/CD implementation and production deployment milestones.
 
-### Execution
+The production rollback and recovery drill was also executed on November 21, 2026, using Render's deployment history.
 
-| Operation | Commit | Duration | Result |
-|---|---|---:|---|
-| Rollback | 9323df8 | 25.8 seconds | Successful |
-| Restore latest deployment | 6cbf87c | 20.2 seconds | Successful |
-
-### Verification
-- Render reported both deployments as successful and live.
-- Production `/health` endpoint returned HTTP 200.
-- Previous deployment was restored successfully.
-- Latest deployment was subsequently restored successfully.
-
-### Outcome
-Rollback and recovery drill completed successfully.
+The application was subsequently deployed successfully through Render Deploy Hooks, with the latest recorded production deployment being commit `cf18d2a` on November 23, 2026.
