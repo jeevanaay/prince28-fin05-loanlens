@@ -169,7 +169,7 @@ Generated using `scripts/dataset_report.py`.
 | Press Information Bureau | 1 |
 | SBI | 3 |
 
-### Source register and collection status
+### Initial source collection records (historical)
 
 | Source | Document | URL | Licence / reuse status | Collection status | Method |
 |---|---|---|---|---|---|
@@ -237,3 +237,20 @@ An inaccessible robots.txt file is not proof that crawling is prohibited. It mea
 5. Historical downloads cannot be certified as compliant solely from the current robots.txt checks. Their original access conditions have not all been independently established.
 
 Until these gaps are resolved, do not treat the affected sources as cleared for automated collection or redistribution.
+
+### Collection eligibility controls
+
+The collection pipeline now enforces an explicit source-eligibility gate.
+
+- `data/sources.csv` requires `collection_status` and `collection_evidence`.
+- Supported statuses are `approved`, `pending` and `blocked`.
+- URL collection rejects sources that are not approved.
+- Sitemap, repository and manual collection require explicit eligibility arguments.
+- These controls apply before network access, repository cloning or local file copying.
+- Every collection decision is recorded in the manifest.
+
+**Important:** Setting a source to `approved` is an administrative decision, not proof that legal permission exists. Approval must be supported by documented collection and reuse rights.
+
+Current source register: 15 entries — 9 pending, 6 blocked, 0 approved.
+
+Historical downloads are not automatically considered approved by the new controls. Their original collection conditions and reuse rights remain subject to verification.

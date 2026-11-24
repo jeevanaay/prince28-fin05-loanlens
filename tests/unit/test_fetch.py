@@ -39,6 +39,8 @@ def make_item(url: str = "https://example.com/file.pdf") -> dict[str, str]:
         "source": "Example",
         "licence": "Test licence",
         "title": "Example PDF",
+        "collection_status": "approved",
+        "collection_evidence": "Approved test fixture",
     }
 
 
@@ -221,6 +223,34 @@ async def test_fetch_blocks_robots_disallowed_url(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
+async def test_fetch_blocks_pending_collection_without_network(
+    tmp_path: Path,
+) -> None:
+    item = make_item()
+    item["collection_status"] = "pending"
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        pytest.fail("Network must not be called for pending sources")
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        manifest = Manifest(tmp_path / "manifest.jsonl")
+        result = await fetch_one(
+            item,
+            client=client,
+            robots=Robots(client),
+            gate=HostGate(0),
+            semaphore=asyncio.Semaphore(4),
+            manifest=manifest,
+            raw_dir=tmp_path / "raw",
+        )
+
+    assert result.status == "blocked"
+    assert "collection_status=pending" in result.error
+    assert not (tmp_path / "raw").exists()
+    assert item["url"] in manifest.records
+
+
+@pytest.mark.asyncio
 async def test_fetch_retries_temporary_server_error(tmp_path: Path) -> None:
     attempts = 0
 
@@ -319,3 +349,32 @@ def test_manifest_records_manual_origin(tmp_path: Path) -> None:
     stored = json.loads((tmp_path / "manifest.jsonl").read_text(encoding="utf-8").strip())
 
     assert stored["via"] == "manual"
+
+
+@pytest.mark.asyncio
+async def test_fetch_blocks_approved_source_without_evidence(
+    tmp_path: Path,
+) -> None:
+    item = make_item()
+    item["collection_status"] = "approved"
+    item["collection_evidence"] = ""
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        pytest.fail("Network should not be called without collection evidence")
+
+    manifest = Manifest(tmp_path / "manifest.jsonl")
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        result = await fetch_one(
+            item,
+            client=client,
+            robots=Robots(client),
+            gate=HostGate(0),
+            semaphore=asyncio.Semaphore(4),
+            manifest=manifest,
+            raw_dir=tmp_path / "raw",
+        )
+
+    assert result.status == "blocked"
+    assert "evidence" in (result.error or "").lower()
+    assert not (tmp_path / "raw").exists()

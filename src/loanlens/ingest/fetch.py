@@ -68,6 +68,8 @@ class ManifestRecord:
     bytes: int = 0
     error: str | None = None
     via: str = "url"
+    collection_status: str = "pending"
+    collection_evidence: str = ""
 
 
 class Manifest:
@@ -188,6 +190,27 @@ async def fetch_one(
     source = item.get("source", "")
     licence = item.get("licence", "")
     title = item.get("title", "")
+    collection_status = item.get("collection_status", "pending").strip().lower()
+    collection_evidence = item.get("collection_evidence", "").strip()
+
+    if collection_status != "approved" or not collection_evidence:
+        record = ManifestRecord(
+            url=url,
+            source=source,
+            licence=licence,
+            title=title,
+            status="blocked",
+            fetched_at=utc_now(),
+            error=(
+                "Automated collection is not approved: "
+                f"collection_status={collection_status}; "
+                f"evidence={collection_evidence}"
+            ),
+            collection_status=collection_status,
+            collection_evidence=collection_evidence,
+        )
+        manifest.add(record)
+        return record
 
     if manifest.is_complete(url):
         previous = manifest.records[url]
@@ -209,6 +232,8 @@ async def fetch_one(
             status="blocked",
             fetched_at=utc_now(),
             error="robots.txt disallows crawling or could not be checked",
+            collection_status=collection_status,
+            collection_evidence=collection_evidence,
         )
         manifest.add(record)
         return record
@@ -256,6 +281,8 @@ async def fetch_one(
                     path=str(destination),
                     sha256=hashlib.sha256(content).hexdigest(),
                     bytes=len(content),
+                    collection_status=collection_status,
+                    collection_evidence=collection_evidence,
                 )
                 manifest.add(record)
                 return record
@@ -282,6 +309,8 @@ async def fetch_one(
             status="failed",
             fetched_at=utc_now(),
             error=error,
+            collection_status=collection_status,
+            collection_evidence=collection_evidence,
         )
         manifest.add(record)
         return record
