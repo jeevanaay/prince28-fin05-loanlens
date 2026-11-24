@@ -641,12 +641,36 @@ Collection methods exposed through `scripts/fetch.py`:
 - Failed robots retrieval: fail closed
 - Completed documents: skipped when already present
 - Partial downloads: temporary `.part` files with atomic replacement
+### Source eligibility enforcement
+
+Collection eligibility is enforced across all four collection methods.
+
+| Method | Eligibility control |
+|---|---|
+| `urls` | Reads status and evidence from `data/sources.csv` |
+| `sitemap` | Requires explicit approval and evidence before sitemap access |
+| `repo` | Requires explicit approval and evidence before cloning |
+| `manual` | Requires explicit approval and evidence before copying |
+
+Supported statuses: `approved`, `pending`, `blocked`.
+
+Unapproved sources are rejected before collection operations. Collection evidence is retained in manifest records.
+
+Eligibility metadata does not itself establish legal permission. Source-specific collection and reuse rights must be independently verified.
 
 ## 25. Source Register and Collection
 
 Source register: `data/sources.csv`
 
-The register contains 10 source entries covering government schemes and education-loan information from SBI, Bank of Baroda, Canara Bank and Indian Bank.
+The register contains 15 source entries covering government schemes and education-loan information from SBI, Bank of Baroda, Canara Bank and Indian Bank.
+
+Current collection eligibility:
+- Total entries: 15
+- Pending: 9
+- Blocked: 6
+- Approved: 0
+
+No sources are currently approved for automated collection.
 
 PM-Vidyalaxmi documents requiring manual collection are registered through the manual collection command rather than automatically crawled.
 
