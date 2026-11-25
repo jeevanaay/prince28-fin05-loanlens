@@ -69,23 +69,80 @@ def detect_kind(path: Path, content: bytes) -> str:
         ) from None
 
 
-def _heading_level(span: dict) -> int | None:
-    """Estimate heading level from font size and bold formatting."""
-    size = span.get("size", 0)
-    flags = span.get("flags", 0)
-    text = span.get("text", "").strip()
+def _pdf_line_text(spans: list[dict]) -> str:
+    """Reconstruct a PDF line from spans, preserving word boundaries."""
+    parts = []
+    previous_end = None
 
-    if not text or len(text) > 150:
+    for span in spans:
+        value = span.get("text", "")
+        if not value:
+            continue
+
+        start = span.get("bbox", (0, 0, 0, 0))[0]
+        size = span.get("size", 10)
+
+        if previous_end is not None and start - previous_end > max(1, size * 0.15):
+            parts.append(" ")
+
+        parts.append(value)
+        previous_end = span.get("bbox", (0, 0, 0, 0))[2]
+
+    return "".join(parts).strip()
+
+
+def _numbered_heading(lines: list[list[dict]], index: int) -> tuple[int, str] | None:
+    """Detect numbered headings, including bold labels followed by regular text."""
+    line = lines[index]
+    line_text = _pdf_line_text(line)
+
+    marker = re.match(r"^(\d+(?:\.\d+)*\.?)\s*(.*)$", line_text)
+    if not marker:
         return None
 
-    if size >= 18:
-        return 1
-    if size >= 14 or (flags & 16 and size >= 12):
-        return 2
-    if size >= 11 and flags & 16:
-        return 3
+    number = marker.group(1).rstrip(".")
+    level = len(number.split("."))
 
-    return None
+    if level > 6:
+        return None
+
+    remainder = marker.group(2).strip()
+    visible_spans = [span for span in line if span.get("text", "").strip()]
+    bold_spans = [span for span in visible_spans if span.get("flags", 0) & 16]
+
+    title = ""
+
+    def normalize(value):
+        return " ".join(value.split()).casefold()
+
+    if remainder and bold_spans:
+        bold_text = _pdf_line_text(bold_spans).strip()
+
+        # The complete line is bold.
+        if normalize(bold_text) == normalize(line_text):
+            title = remainder
+
+        # Only the numbered heading label is bold; following text is body content.
+        elif re.match(
+            rf"^{re.escape(number)}\.?\s+.+:\s*$",
+            bold_text,
+        ):
+            title = re.sub(
+                rf"^{re.escape(number)}\.?\s+",
+                "",
+                bold_text,
+            ).strip()
+
+    elif not remainder and index + 1 < len(lines):
+        next_visible = [span for span in lines[index + 1] if span.get("text", "").strip()]
+
+        if next_visible and all(span.get("flags", 0) & 16 for span in next_visible):
+            title = _pdf_line_text(next_visible)
+
+    if not title or len(title) > 150:
+        return None
+
+    return level, title
 
 
 def _pdf_tables(page) -> tuple[str, int]:
@@ -133,33 +190,81 @@ def parse_pdf(path: Path) -> ParsedDoc:
         if document.is_encrypted:
             raise ParseError("encrypted", path.name)
 
-        title = document.metadata.get("title") or path.stem
+        title = (document.metadata.get("title") or "").strip()
 
-        for index, page in enumerate(document):
-            blocks = page.get_text("dict")["blocks"]
-            lines = []
-            page_headings = []
+        if not title and len(document) > 0:
+            first_page = document[0]
+            title_candidates = []
 
-            for block in blocks:
+            for block in first_page.get_text("dict")["blocks"]:
                 if "lines" not in block:
                     continue
 
                 for line in block["lines"]:
-                    for span in line["spans"]:
-                        value = span["text"].strip()
-                        if not value:
-                            continue
+                    spans = [span for span in line["spans"] if span.get("text", "").strip()]
 
-                        level = _heading_level(span)
-                        if level:
-                            page_headings.append((level, value))
+                    bold_title_spans = [
+                        span
+                        for span in spans
+                        if span.get("flags", 0) & 16
+                        and span.get("size", 0) >= 10
+                        and span.get("bbox", (0, 0, 0, 0))[1] <= 100
+                    ]
 
-                        lines.append(value)
+                    if bold_title_spans:
+                        title_text = " ".join(span["text"].strip() for span in bold_title_spans)
+                        y_position = min(span["bbox"][1] for span in bold_title_spans)
+                        title_candidates.append((y_position, title_text))
 
-            text = "\n".join(lines).strip()
+            if title_candidates:
+                title = min(title_candidates, key=lambda item: item[0])[1]
+
+        if not title:
+            title = path.stem
+
+        for index, page in enumerate(document):
+            blocks = page.get_text("dict")["blocks"]
+            ordered_lines = _pdf_reading_order(page, blocks)
+
+            pdf_lines = []
+            text_parts = []
+
+            if ordered_lines is not None:
+                for item in ordered_lines:
+                    spans = item["spans"]
+                    pdf_lines.append(spans)
+
+                    line_text = _pdf_line_text(spans)
+                    if line_text:
+                        text_parts.append(line_text)
+
+                text = "\n".join(text_parts).strip()
+
+            else:
+                for block in blocks:
+                    if "lines" not in block:
+                        continue
+
+                    for line in block["lines"]:
+                        spans = [span for span in line["spans"] if span.get("text", "").strip()]
+
+                        if spans:
+                            pdf_lines.append(spans)
+
+                text = page.get_text("text", sort=True).strip()
+
             total_chars += len(text)
 
+            page_headings = []
+
+            for line_index in range(len(pdf_lines)):
+                heading = _numbered_heading(pdf_lines, line_index)
+
+                if heading:
+                    page_headings.append(heading)
+
             table_markdown, table_count = _pdf_tables(page)
+
             if table_markdown:
                 text += "\n\n" + table_markdown
 
@@ -235,6 +340,7 @@ class MainExtractor(HTMLParser):
         self.in_main = False
         self.parts = []
         self.headings = []
+        self.title_heading = None
         self.current_heading_tag = None
         self.current_heading_parts = []
 
@@ -260,6 +366,9 @@ class MainExtractor(HTMLParser):
             if heading:
                 self.headings.append(heading)
 
+                if tag == "h1" and self.title_heading is None:
+                    self.title_heading = heading
+
             self.current_heading_tag = None
             self.current_heading_parts = []
 
@@ -267,11 +376,41 @@ class MainExtractor(HTMLParser):
             self.in_main = False
 
 
+class HeadingExtractor(HTMLParser):
+    """Extract heading text directly from HTML."""
+
+    def __init__(self):
+        super().__init__()
+        self.headings = []
+        self.current_heading_tag = None
+        self.current_heading_parts = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag in {"h1", "h2", "h3", "h4", "h5", "h6"}:
+            self.current_heading_tag = tag
+            self.current_heading_parts = []
+
+    def handle_data(self, data):
+        if self.current_heading_tag and data.strip():
+            self.current_heading_parts.append(data.strip())
+
+    def handle_endtag(self, tag):
+        if self.current_heading_tag == tag:
+            heading = " ".join(self.current_heading_parts)
+            if heading:
+                self.headings.append(heading)
+
+            self.current_heading_tag = None
+            self.current_heading_parts = []
+
+
 def parse_html(path: Path, content: bytes) -> ParsedDoc:
     """Extract HTML content, headings and tables."""
     try:
+        decoded = content.decode("utf-8", errors="replace")
+
         parser = MainExtractor()
-        parser.feed(content.decode("utf-8", errors="replace"))
+        parser.feed(decoded)
 
         main_text = " ".join(parser.parts)
 
@@ -323,7 +462,72 @@ def parse_html(path: Path, content: bytes) -> ParsedDoc:
             raise ParseError("empty", "HTML extraction returned no content")
 
         metadata = trafilatura.extract_metadata(content)
-        title = metadata.title if metadata and metadata.title else path.stem
+
+        sbi_title = re.search(
+            r'<p[^>]*class=["\'][^"\']*\bcard-title\b[^"\']*["\'][^>]*>(.*?)</p>',
+            decoded,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+
+        if sbi_title:
+            title = re.sub(r"\s+", " ", sbi_title.group(1)).strip()
+
+            # Remove the unrelated Education Loan Home footer section.
+            extracted = re.split(
+                r"(?im)^#{1,6}\s+Education Loan Home\s*$",
+                extracted,
+                maxsplit=1,
+            )[0].strip()
+
+            # Remove the SEO/browser title from the document text.
+            if metadata and metadata.title:
+                seo_heading = re.escape(metadata.title.strip())
+                extracted = re.sub(
+                    rf"(?m)^#\s+{seo_heading}\s*$",
+                    "",
+                    extracted,
+                    count=1,
+                ).strip()
+
+            # Rebuild headings from the cleaned document text.
+            headings = []
+            for line in extracted.splitlines():
+                match = re.match(r"^(#{1,6})\s+(.+)", line.strip())
+                if match:
+                    heading = match.group(2).strip()
+                    if heading != metadata.title if metadata else True:
+                        headings.append(heading)
+
+        else:
+            title = (
+                parser.title_heading
+                or (metadata.title if metadata and metadata.title else None)
+                or path.stem
+            )
+
+            # Fallback: extract headings directly from HTML when
+        # Trafilatura does not preserve the heading structure.
+        if not headings:
+            heading_parser = HeadingExtractor()
+            heading_parser.feed(decoded)
+
+            ignored_headings = {
+                "switch theme",
+                "pick a color",
+                "you are vistor no:",
+            }
+
+            headings = [
+                heading
+                for heading in heading_parser.headings
+                if heading.casefold() not in ignored_headings
+                and not re.fullmatch(r"[\d,.\s]+", heading)
+                and not re.fullmatch(
+                    r"[\d,.]+\s+crores?",
+                    heading,
+                    re.IGNORECASE,
+                )
+            ]
 
         return ParsedDoc(
             "trafilatura",
@@ -332,7 +536,7 @@ def parse_html(path: Path, content: bytes) -> ParsedDoc:
             [
                 ParsedPage(
                     1,
-                    extracted.strip(),
+                    extracted,
                     headings,
                     tables=extracted.count("| ---"),
                 )
@@ -463,3 +667,51 @@ def parse_file(path: Path | str, parser: str = "pymupdf") -> ParsedDoc:
         return parse_data(path, content)
 
     return parse_text(path, content)
+
+
+def _pdf_reading_order(page, blocks):
+    """Separate clear two-column PDF pages into individual reading lines."""
+    midpoint = page.rect.width / 2
+    left = []
+    right = []
+    spanning = []
+
+    for block in blocks:
+        if "lines" not in block:
+            continue
+
+        for line in block["lines"]:
+            spans = [span for span in line["spans"] if span.get("text", "").strip()]
+
+            if not spans:
+                continue
+
+            x0 = min(span["bbox"][0] for span in spans)
+            x1 = max(span["bbox"][2] for span in spans)
+            y0 = min(span["bbox"][1] for span in spans)
+
+            item = {
+                "bbox": (x0, y0, x1, max(span["bbox"][3] for span in spans)),
+                "spans": spans,
+            }
+
+            if x1 <= midpoint:
+                left.append(item)
+            elif x0 >= midpoint:
+                right.append(item)
+            else:
+                spanning.append(item)
+
+    if not left or not right:
+        return None
+
+    first_column_y = min(item["bbox"][1] for item in left + right)
+
+    if any(item["bbox"][3] > first_column_y for item in spanning):
+        return None
+
+    return (
+        sorted(spanning, key=lambda item: item["bbox"][1])
+        + sorted(left, key=lambda item: item["bbox"][1])
+        + sorted(right, key=lambda item: item["bbox"][1])
+    )

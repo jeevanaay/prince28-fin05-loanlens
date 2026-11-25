@@ -31,10 +31,12 @@ async def store_parsed_document(
         "table_count": sum(page.tables for page in parsed_doc.pages),
     }
 
+    title = parsed_doc.title or manifest_record.get("title") or path.stem
+
     if document is None:
         document = Document(
             external_id=external_id,
-            title=manifest_record.get("title") or parsed_doc.title or path.stem,
+            title=title,
             lender=manifest_record.get("source"),
             source_url=source_url,
             licence=manifest_record.get("licence"),
@@ -45,7 +47,7 @@ async def store_parsed_document(
         session.add(document)
         await session.flush()
     else:
-        document.title = manifest_record.get("title") or parsed_doc.title or path.stem
+        document.title = title
         document.lender = manifest_record.get("source")
         document.source_url = source_url
         document.licence = manifest_record.get("licence")
