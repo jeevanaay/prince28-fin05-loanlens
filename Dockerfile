@@ -41,6 +41,7 @@ COPY --from=builder --chown=app:app /app/.venv /app/.venv
 
 # Copy runtime application assets.
 COPY --chown=app:app data ./data
+COPY --chown=app:app prompts ./prompts
 COPY --chown=app:app migrations ./migrations
 COPY --chown=app:app scripts ./scripts
 COPY --chown=app:app alembic.ini ./
