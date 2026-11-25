@@ -987,25 +987,16 @@ Compared PyMuPDF with pypdf for PDFs and the available extraction approaches for
 
 
 
-| File | Similarity |
-
-|---|---:|
-
-| Baroda Scholar | 80.50% |
-
-| IB Education Loan IBA | 100% |
-
-| Press Release PDF | 98.80% |
-
-| Education Loan Scheme | 100% |
-
-| Global Ed-Vantage Scheme | 100% |
-
-| PM-Vidyalaxmi Guidelines PDF | 83.54% |
-
-| Masters Degree Education Loan | 100% |
-
-| Global Ed-Vantage MITC PDF | 97.15% |
+| File | Similarity | Verdict |
+|---|---:|---|
+| Baroda Scholar | 80.50% | Targeted cleanup required |
+| IB Education Loan IBA | 100% | Equivalent extraction |
+| Press Release PDF | 98.80% | Near-identical extraction |
+| Education Loan Scheme | 100% | Equivalent extraction |
+| Global Ed-Vantage Scheme | 100% | Equivalent extraction |
+| PM-Vidyalaxmi Guidelines PDF | 83.54% | Review extraction differences |
+| Masters Degree Education Loan | 100% | Equivalent extraction |
+| Global Ed-Vantage MITC PDF | 97.15% | Near-identical extraction |
 
 
 
