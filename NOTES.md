@@ -819,3 +819,260 @@ Verification:
 
 **Result:** Forced interruption and restart/resume test passed using
 an isolated local test server and temporary test data.
+
+
+\# D07 â€” LoanLens: Document Parsing and PostgreSQL Page Storage
+
+
+
+\## 33. Objective
+
+
+
+Built a document parsing pipeline to extract clean content from collected PDF and HTML files and store the results in PostgreSQL.
+
+
+
+The pipeline captures:
+
+\- Page numbers
+
+\- Extracted text
+
+\- Heading paths
+
+\- Markdown tables
+
+\- Parsing failures and failure reasons
+
+
+
+\## 34. Dependencies and Database Migration
+
+
+
+Installed:
+
+\- PyMuPDF
+
+\- Trafilatura
+
+\- pypdf
+
+
+
+Used SQLAlchemy 2.x with async PostgreSQL integration.
+
+
+
+Created and applied migration:
+
+
+
+`3880cb25b992\_add\_page\_headings\_and\_parse\_failures.py`
+
+
+
+Database changes:
+
+\- Added `headings` JSONB column to `pages`.
+
+\- Created `parse\_failures` table.
+
+\- Added failure tracking fields: path, SHA-256, source URL, reason, detail, attempts and timestamps.
+
+
+
+\## 35. Parser Implementation
+
+
+
+Created `src/loanlens/ingest/parse.py`.
+
+
+
+Implemented:
+
+\- PDF parsing using PyMuPDF.
+
+\- Alternative PDF parsing using pypdf.
+
+\- HTML parsing using Trafilatura.
+
+\- Text parsing.
+
+\- JSON, YAML and CSV parsing.
+
+\- File-type detection.
+
+\- Heading extraction.
+
+\- Markdown table extraction.
+
+\- Parse error handling.
+
+
+
+Created `src/loanlens/ingest/store.py` to store parsed documents and pages and track parsing failures.
+
+
+
+\## 36. Corpus Ingestion
+
+
+
+Created `scripts/parse\_corpus.py` to parse downloaded files from the manifest and store the extracted results in PostgreSQL.
+
+
+
+Results:
+
+
+
+| Metric | Result |
+
+|---|---:|
+
+| Downloaded files processed | 8 |
+
+| Documents stored | 8 |
+
+| Pages stored | 33 |
+
+| Parsing failures | 0 |
+
+
+
+Three additional sources were blocked during collection and were not treated as parser failures.
+
+
+
+\## 37. Extraction Quality Improvement
+
+
+
+Improved the Baroda Scholar HTML extraction.
+
+
+
+The initial extraction included unrelated promotional content, including personal loan and home loan sections.
+
+
+
+Refined the extraction to focus on the main article content.
+
+
+
+Final result:
+
+\- Extracted characters: 11,919
+
+\- Headings: 8
+
+\- Personal loan promotional content: excluded
+
+\- Home loan promotional content: excluded
+
+
+
+Re-ingested the corrected document into PostgreSQL.
+
+
+
+\## 38. Parser Comparison
+
+
+
+Compared PyMuPDF with pypdf for PDFs and the available extraction approaches for HTML files.
+
+
+
+| File | Similarity |
+
+|---|---:|
+
+| Baroda Scholar | 80.50% |
+
+| IB Education Loan IBA | 100% |
+
+| Press Release PDF | 98.80% |
+
+| Education Loan Scheme | 100% |
+
+| Global Ed-Vantage Scheme | 100% |
+
+| PM-Vidyalaxmi Guidelines PDF | 83.54% |
+
+| Masters Degree Education Loan | 100% |
+
+| Global Ed-Vantage MITC PDF | 97.15% |
+
+
+
+Summary:
+
+\- 3 PDF files compared.
+
+\- 5 HTML files compared.
+
+\- 8 available files compared successfully.
+
+\- PyMuPDF detected PDF headings more effectively than pypdf.
+
+\- Trafilatura performed well for HTML extraction, with targeted cleanup for Baroda Scholar.
+
+
+
+Only 8 downloaded files were available for comparison; the target of 10 could not be reached because three sources were blocked during collection.
+
+
+
+\## 39. PostgreSQL Verification
+
+
+
+Verified the database after ingestion:
+
+
+
+| Database item | Count |
+
+|---|---:|
+
+| Documents | 28 |
+
+| Pages | 33 |
+
+| Parse failures | 0 |
+
+
+
+The 28 documents include 20 pre-existing records and 8 newly ingested documents.
+
+
+
+\## 40. D07 Summary
+
+
+
+Completed the document parsing and PostgreSQL page-storage pipeline.
+
+
+
+Successfully:
+
+\- Parsed the available PDF and HTML corpus.
+
+\- Stored 8 documents and 33 pages.
+
+\- Added heading metadata and parse-failure tracking.
+
+\- Improved Baroda Scholar extraction quality.
+
+\- Compared two PDF parsers and HTML extraction results.
+
+\- Verified database records.
+
+
+
+\*\*Limitation:\*\* Parser comparison covered 8 available files instead of 10 because three sources were blocked during collection.
