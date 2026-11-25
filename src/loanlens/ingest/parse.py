@@ -376,6 +376,34 @@ class MainExtractor(HTMLParser):
             self.in_main = False
 
 
+class HeadingExtractor(HTMLParser):
+    """Extract heading text directly from HTML."""
+
+    def __init__(self):
+        super().__init__()
+        self.headings = []
+        self.current_heading_tag = None
+        self.current_heading_parts = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag in {"h1", "h2", "h3", "h4", "h5", "h6"}:
+            self.current_heading_tag = tag
+            self.current_heading_parts = []
+
+    def handle_data(self, data):
+        if self.current_heading_tag and data.strip():
+            self.current_heading_parts.append(data.strip())
+
+    def handle_endtag(self, tag):
+        if self.current_heading_tag == tag:
+            heading = " ".join(self.current_heading_parts)
+            if heading:
+                self.headings.append(heading)
+
+            self.current_heading_tag = None
+            self.current_heading_parts = []
+
+
 def parse_html(path: Path, content: bytes) -> ParsedDoc:
     """Extract HTML content, headings and tables."""
     try:
@@ -477,8 +505,29 @@ def parse_html(path: Path, content: bytes) -> ParsedDoc:
                 or path.stem
             )
 
-        if not extracted:
-            raise ParseError("empty", "HTML extraction returned no content")
+            # Fallback: extract headings directly from HTML when
+        # Trafilatura does not preserve the heading structure.
+        if not headings:
+            heading_parser = HeadingExtractor()
+            heading_parser.feed(decoded)
+
+            ignored_headings = {
+                "switch theme",
+                "pick a color",
+                "you are vistor no:",
+            }
+
+            headings = [
+                heading
+                for heading in heading_parser.headings
+                if heading.casefold() not in ignored_headings
+                and not re.fullmatch(r"[\d,.\s]+", heading)
+                and not re.fullmatch(
+                    r"[\d,.]+\s+crores?",
+                    heading,
+                    re.IGNORECASE,
+                )
+            ]
 
         return ParsedDoc(
             "trafilatura",
