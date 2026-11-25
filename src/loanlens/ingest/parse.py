@@ -96,10 +96,23 @@ def _numbered_heading(lines: list[list[dict]], index: int) -> tuple[int, str] | 
     line = lines[index]
     line_text = _pdf_line_text(line)
 
+    # Detect annexure headings, including headings with a title on the same line.
+    annexure = re.match(
+        r"^\s*Annexure\s*[-–—]?\s*(\d+)\s*:?\s*(.*?)\s*$",
+        line_text,
+        flags=re.IGNORECASE,
+    )
+
+    if annexure:
+        suffix = annexure.group(2).strip()
+        title = f"Annexure-{annexure.group(1)}"
+        if suffix:
+            title += f": {suffix}"
+        return 1, title
+
     marker = re.match(r"^(\d+(?:\.\d+)*\.?)\s*(.*)$", line_text)
     if not marker:
         return None
-
     number = marker.group(1).rstrip(".")
     level = len(number.split("."))
 
@@ -112,17 +125,16 @@ def _numbered_heading(lines: list[list[dict]], index: int) -> tuple[int, str] | 
 
     title = ""
 
-    def normalize(value):
+    def normalize(value: str) -> str:
         return " ".join(value.split()).casefold()
 
+    # Case 1: Number and heading text are on the same line.
     if remainder and bold_spans:
         bold_text = _pdf_line_text(bold_spans).strip()
 
-        # The complete line is bold.
         if normalize(bold_text) == normalize(line_text):
             title = remainder
 
-        # Only the numbered heading label is bold; following text is body content.
         elif re.match(
             rf"^{re.escape(number)}\.?\s+.+:\s*$",
             bold_text,
@@ -133,11 +145,12 @@ def _numbered_heading(lines: list[list[dict]], index: int) -> tuple[int, str] | 
                 bold_text,
             ).strip()
 
+    # Case 2: Number is on one line and the bold heading is on the next.
     elif not remainder and index + 1 < len(lines):
         next_visible = [span for span in lines[index + 1] if span.get("text", "").strip()]
 
         if next_visible and all(span.get("flags", 0) & 16 for span in next_visible):
-            title = _pdf_line_text(next_visible)
+            title = _pdf_line_text(next_visible).strip()
 
     if not title or len(title) > 150:
         return None
@@ -179,6 +192,69 @@ def _pdf_tables(page) -> tuple[str, int]:
     return "\n".join(output), count
 
 
+def _clean_pdf_title(value: str | None) -> str:
+    """Clean generic PDF metadata titles."""
+    if not value:
+        return ""
+
+    title = re.sub(r"\s+", " ", value).strip()
+
+    title = re.sub(
+        r"^Microsoft Word\s*[-–—]\s*",
+        "",
+        title,
+        flags=re.IGNORECASE,
+    )
+
+    match = re.match(
+        r"^Guidelines\s+PM-Vidyalaxmi\s+(\d{1,2}\s+\w+\s+\d{4})$",
+        title,
+        flags=re.IGNORECASE,
+    )
+
+    if match:
+        return f"PM-Vidyalaxmi Guidelines ({match.group(1)})"
+
+    return title
+
+
+def _filename_title(path: Path) -> str:
+    """Convert filename into a readable document title."""
+
+    known_titles = {
+        "pm-vidyalaxmi-implementation-memo": "PM-Vidyalaxmi Implementation Memorandum",
+    }
+
+    if path.stem.casefold() in known_titles:
+        return known_titles[path.stem.casefold()]
+
+    stem = re.sub(
+        r"^[0-9a-f]{8,}_",
+        "",
+        path.stem,
+        flags=re.IGNORECASE,
+    )
+
+    title = re.sub(r"[-_]+", " ", stem).strip().title()
+
+    acronyms = {
+        "Pm": "PM",
+        "Sbi": "SBI",
+        "Iba": "IBA",
+        "Mitc": "MITC",
+        "Pdf": "PDF",
+    }
+
+    for original, replacement in acronyms.items():
+        title = re.sub(
+            rf"\b{original}\b",
+            replacement,
+            title,
+        )
+
+    return title
+
+
 def parse_pdf(path: Path) -> ParsedDoc:
     pages = []
     heading_stack: list[tuple[int, str]] = []
@@ -190,7 +266,7 @@ def parse_pdf(path: Path) -> ParsedDoc:
         if document.is_encrypted:
             raise ParseError("encrypted", path.name)
 
-        title = (document.metadata.get("title") or "").strip()
+        title = _clean_pdf_title(document.metadata.get("title"))
 
         if not title and len(document) > 0:
             first_page = document[0]
@@ -220,7 +296,7 @@ def parse_pdf(path: Path) -> ParsedDoc:
                 title = min(title_candidates, key=lambda item: item[0])[1]
 
         if not title:
-            title = path.stem
+            title = _filename_title(path)
 
         for index, page in enumerate(document):
             blocks = page.get_text("dict")["blocks"]
