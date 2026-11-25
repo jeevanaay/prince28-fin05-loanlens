@@ -224,19 +224,35 @@ def parse_pdf(path: Path) -> ParsedDoc:
 
         for index, page in enumerate(document):
             blocks = page.get_text("dict")["blocks"]
+            ordered_lines = _pdf_reading_order(page, blocks)
+
             pdf_lines = []
+            text_parts = []
 
-            for block in blocks:
-                if "lines" not in block:
-                    continue
+            if ordered_lines is not None:
+                for item in ordered_lines:
+                    spans = item["spans"]
+                    pdf_lines.append(spans)
 
-                for line in block["lines"]:
-                    spans = [span for span in line["spans"] if span.get("text", "").strip()]
-                    if spans:
-                        pdf_lines.append(spans)
+                    line_text = _pdf_line_text(spans)
+                    if line_text:
+                        text_parts.append(line_text)
 
-            # Use PyMuPDF's text reconstruction to preserve normal word spacing.
-            text = page.get_text("text", sort=True).strip()
+                text = "\n".join(text_parts).strip()
+
+            else:
+                for block in blocks:
+                    if "lines" not in block:
+                        continue
+
+                    for line in block["lines"]:
+                        spans = [span for span in line["spans"] if span.get("text", "").strip()]
+
+                        if spans:
+                            pdf_lines.append(spans)
+
+                text = page.get_text("text", sort=True).strip()
+
             total_chars += len(text)
 
             page_headings = []
@@ -602,3 +618,51 @@ def parse_file(path: Path | str, parser: str = "pymupdf") -> ParsedDoc:
         return parse_data(path, content)
 
     return parse_text(path, content)
+
+
+def _pdf_reading_order(page, blocks):
+    """Separate clear two-column PDF pages into individual reading lines."""
+    midpoint = page.rect.width / 2
+    left = []
+    right = []
+    spanning = []
+
+    for block in blocks:
+        if "lines" not in block:
+            continue
+
+        for line in block["lines"]:
+            spans = [span for span in line["spans"] if span.get("text", "").strip()]
+
+            if not spans:
+                continue
+
+            x0 = min(span["bbox"][0] for span in spans)
+            x1 = max(span["bbox"][2] for span in spans)
+            y0 = min(span["bbox"][1] for span in spans)
+
+            item = {
+                "bbox": (x0, y0, x1, max(span["bbox"][3] for span in spans)),
+                "spans": spans,
+            }
+
+            if x1 <= midpoint:
+                left.append(item)
+            elif x0 >= midpoint:
+                right.append(item)
+            else:
+                spanning.append(item)
+
+    if not left or not right:
+        return None
+
+    first_column_y = min(item["bbox"][1] for item in left + right)
+
+    if any(item["bbox"][3] > first_column_y for item in spanning):
+        return None
+
+    return (
+        sorted(spanning, key=lambda item: item["bbox"][1])
+        + sorted(left, key=lambda item: item["bbox"][1])
+        + sorted(right, key=lambda item: item["bbox"][1])
+    )

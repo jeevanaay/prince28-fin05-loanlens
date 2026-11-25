@@ -1063,5 +1063,6 @@ Successfully:
 - Reviewed extraction quality for 6 HTML files.
 - Verified document, page, heading, title, and failure data in PostgreSQL.
 - Confirmed the complete unit test suite passes: 71 tests.
+- Fixed and verified two-column reading order for the SBI Global Ed-Vantage MITC PDF.
 
-**Remaining extraction-quality reviews:** Global Ed-Vantage MITC PDF extraction and PM-Vidyalaxmi Portal heading detection. Real-document nested heading-path verification also remains pending.
+**Remaining work:** PM-Vidyalaxmi Portal heading detection and real-document nested heading-path verification. Global Ed-Vantage MITC two-column PDF reading order has been corrected and verified.
