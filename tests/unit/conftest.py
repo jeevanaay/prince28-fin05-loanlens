@@ -3,9 +3,14 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from loanlens.api.deps import get_db_session, get_repository
+from loanlens.api.deps import (
+    get_db_session,
+    get_repository,
+    get_usage_repository,
+)
 from loanlens.api.main import create_app
 from loanlens.config import Settings
+from loanlens.llm.gateway import LLMGateway
 
 SAMPLE = [
     {
@@ -162,6 +167,13 @@ class FakeSession:
         return None
 
 
+class FakeUsageRepository:
+    """Return empty usage data without connecting to the database."""
+
+    async def by_day(self, days: int = 7) -> list[dict]:
+        return []
+
+
 @pytest.fixture
 def data_file(tmp_path):
     path = tmp_path / "records.json"
@@ -170,16 +182,25 @@ def data_file(tmp_path):
 
 
 @pytest.fixture
-def client(data_file):
+def client(data_file, llm, monkeypatch):
+    from loanlens.api import main
+
+    monkeypatch.setattr(
+        main,
+        "build_gateway",
+        lambda settings, recorder=None: LLMGateway(providers=[llm]),
+    )
+
     settings = Settings(
         app_env="ci",
-        database_url="postgresql://app:app@localhost:5433/app_test",  # pragma: allowlist secret,
+        database_url="postgresql://localhost/app_test",
         data_file=data_file,
     )
 
     app = create_app(settings)
 
     app.dependency_overrides[get_repository] = lambda: FakeRepository(SAMPLE)
+    app.dependency_overrides[get_usage_repository] = lambda: FakeUsageRepository()
 
     async def fake_db_session():
         yield FakeSession()

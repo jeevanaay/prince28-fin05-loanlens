@@ -7,9 +7,12 @@ from fastapi import APIRouter, FastAPI
 
 from loanlens.api.errors import register_error_handlers
 from loanlens.api.middleware import request_context
-from loanlens.api.routes import documents, health
+from loanlens.api.routes import chat, documents, health
+from loanlens.api.routes.chat import load_prompt
 from loanlens.config import Settings, get_settings
+from loanlens.db.llm_calls import DatabaseRecorder
 from loanlens.db.session import make_engine, make_sessionmaker
+from loanlens.llm.gateway import build_gateway
 from loanlens.logging_setup import setup_logging
 
 logger = logging.getLogger("loanlens")
@@ -25,7 +28,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.engine = engine
         app.state.session_factory = make_sessionmaker(engine)
 
+        recorder = DatabaseRecorder(app.state.session_factory)
+        app.state.llm_gateway = build_gateway(settings, recorder=recorder)
+
         logger.info("database session factory initialized")
+        logger.info("LLM gateway initialized")
 
         try:
             yield
@@ -40,12 +47,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     app.state.settings = settings
+    app.state.system_prompt = load_prompt(settings.prompts_dir)
 
     app.middleware("http")(request_context)
     register_error_handlers(app)
 
     v1 = APIRouter(prefix="/v1")
     v1.include_router(documents.router)
+    v1.include_router(chat.router)
 
     app.include_router(health.router)
     app.include_router(v1)
