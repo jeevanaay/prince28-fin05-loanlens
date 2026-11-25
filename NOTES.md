@@ -1,4 +1,4 @@
-## D03 ? LoanLens: PostgreSQL Integration (Day 3 Build Lab)
+﻿## D03 ? LoanLens: PostgreSQL Integration (Day 3 Build Lab)
 
 ## 1. PostgreSQL Integration
 
@@ -992,18 +992,18 @@ Compared PyMuPDF and pypdf extraction for all 4 available PDF files. HTML extrac
 | PM-Vidyalaxmi Press Release | 97.57% | Minor extraction differences |
 | PM-Vidyalaxmi Implementation Memorandum | 93.19% | Minor extraction differences |
 
-The percentages are script-reported text similarity measurements, not measures of extraction accuracy. The Global Ed-Vantage MITC result requires manual review.
+The percentages are script-reported text similarity measurements, not measures of extraction accuracy. The Global Ed-Vantage MITC result requires manual review. Its document title is now correctly extracted as "SBI GLOBAL ED-VANTAGE SCHEME".
 
 ### HTML Extraction Quality
 
 | File | Characters | Headings | Pages | Extracted title | Verdict |
 |---|---:|---:|---:|---|---|
-| Global Ed-Vantage Scheme | 6,354 | 8 | 1 | Apply Online in India for Studies abroad (above Rs. 20 lakhs) | Review title; unrelated SBI wording detected |
+| Global Ed-Vantage Scheme | 5,639 | 5 | 1 | SBI Global Ed-Vantage Scheme | Title and targeted cleanup verified |
 | Masters Degree Education Loan India and Abroad | 5,378 | 9 | 1 | Education Loan for Masters Degree Abroad | Title and headings extracted |
-| Baroda Scholar Education Loan | 11,919 | 8 | 1 | Baroda Scholar | Targeted extraction cleanup applied |
-| Education Loan Interest Rates | 3,582 | 7 | 1 | Education Loan Scheme - Interest Rates | Title and headings extracted |
+| Baroda Scholar Education Loan | 11,920 | 8 | 1 | Baroda Scholar | Targeted extraction cleanup applied |
+| Education Loan Interest Rates | 3,540 | 6 | 1 | Education Loan Scheme | Title and headings extracted |
 | IB Education Loan IBA | 18,260 | 17 | 1 | Education Loan India - Study Without Limits | Title and headings extracted |
-| PM-Vidyalaxmi Official Portal | 10,309 | 0 | 1 | PM-Vidyalaxmi Scheme – Education Loans Without Collateral | Review heading extraction |
+| PM-Vidyalaxmi Official Portal | 10,309 | 0 | 1 | Welcome to PM-Vidyalaxmi Portal for applying Education Loan | Review heading extraction |
 
 HTML character counts and heading counts describe extraction output; they are not similarity scores. HTML results were not compared against an independent second parser.
 
@@ -1012,40 +1012,56 @@ HTML character counts and heading counts describe extraction output; they are no
 - 4 PDF files compared using PyMuPDF and pypdf.
 - 6 HTML files reviewed using the current HTML extraction pipeline.
 - All 10 downloaded files were included.
-- Global Ed-Vantage MITC requires further PDF extraction review.
-- Global Ed-Vantage Scheme has unrelated wording in its extracted title.
-- PM-Vidyalaxmi Official Portal has no detected headings.
+- SBI Global Ed-Vantage Scheme title extraction and cleanup improved.
+- SBI Global Ed-Vantage MITC PDF title extraction was verified against the actual PDF.
+- Global Ed-Vantage MITC still requires manual extraction review because of its 62.48% similarity result.
+- PM-Vidyalaxmi Official Portal still has no detected headings.
 - Baroda Scholar extraction cleanup was applied.
 
 **Limitation:** HTML extraction quality was inspected, but no independent parser comparison or HTML similarity score was established.
 
+
 ## 39. PostgreSQL Verification
 
-Verified the database after ingesting the complete 10-file corpus.
+Re-ingested the complete 10-file corpus after the latest parser and storage changes.
 
-| Database item | Count |
+| Database item | Verified result |
 |---|---:|
 | Total documents | 30 |
-| Parsed documents | 10 |
 | Total pages | 40 |
 | Parse failures | 0 |
-| Pages with headings | 34 |
 
-All 10 downloaded files were parsed and stored successfully, producing 40 pages with no recorded parse failures.
+Verified the parser-extracted titles in PostgreSQL:
+
+- `SBI GLOBAL ED-VANTAGE SCHEME` — PDF, 2 pages.
+- `SBI Global Ed-Vantage Scheme` — HTML, 1 page.
+
+Verified page numbers and heading metadata using a real-document SQL query:
+
+- PDF page 1: `Timeline for Disposal of Loan Application`
+- PDF page 2: `Customer Service:`
+- HTML page 1: 5 headings stored.
+
+Page numbers and heading arrays are correctly persisted in PostgreSQL. The documents inspected contain top-level headings; nested heading paths are covered by synthetic unit tests but still need verification against a real document containing nested sections.
+
+The first re-ingestion completed successfully: 10 successful, 0 failed. A subsequent redundant run was interrupted during Neon connection establishment and did not complete.
 
 ## 40. D07 Summary
 
-Completed the document parsing and PostgreSQL page-storage pipeline.
+Completed the document parsing and PostgreSQL page-storage pipeline, with further parser-quality improvements made during validation.
 
 Successfully:
 
 - Parsed all 10 available PDF and HTML files.
-- Stored 10 parsed documents and 40 pages.
+- Stored 10 parsed documents and 40 pages in the successful ingestion.
 - Added heading metadata and parse-failure tracking.
 - Improved PDF heading detection and added regression tests.
+- Added prominent first-page PDF title extraction when metadata is missing.
+- Improved SBI Global Ed-Vantage Scheme title extraction and HTML cleanup.
 - Improved Baroda Scholar HTML extraction.
 - Compared PyMuPDF and pypdf on 4 PDFs.
 - Reviewed extraction quality for 6 HTML files.
-- Verified document, page, heading, and failure counts in PostgreSQL.
+- Verified document, page, heading, title, and failure data in PostgreSQL.
+- Confirmed the complete unit test suite passes: 71 tests.
 
-**Remaining extraction-quality reviews:** Global Ed-Vantage MITC PDF, Global Ed-Vantage Scheme title, and PM-Vidyalaxmi Portal headings.
+**Remaining extraction-quality reviews:** Global Ed-Vantage MITC PDF extraction and PM-Vidyalaxmi Portal heading detection. Real-document nested heading-path verification also remains pending.

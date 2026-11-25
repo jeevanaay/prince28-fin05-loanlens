@@ -92,7 +92,7 @@ def _pdf_line_text(spans: list[dict]) -> str:
 
 
 def _numbered_heading(lines: list[list[dict]], index: int) -> tuple[int, str] | None:
-    """Detect genuine numbered headings, excluding bold text inside paragraphs."""
+    """Detect numbered headings, including bold labels followed by regular text."""
     line = lines[index]
     line_text = _pdf_line_text(line)
 
@@ -107,30 +107,34 @@ def _numbered_heading(lines: list[list[dict]], index: int) -> tuple[int, str] | 
         return None
 
     remainder = marker.group(2).strip()
-
     visible_spans = [span for span in line if span.get("text", "").strip()]
-
     bold_spans = [span for span in visible_spans if span.get("flags", 0) & 16]
 
     title = ""
 
-    # Same-line heading: the complete title must be bold.
+    def normalize(value):
+        return " ".join(value.split()).casefold()
+
     if remainder and bold_spans:
-        bold_text = _pdf_line_text(bold_spans)
+        bold_text = _pdf_line_text(bold_spans).strip()
 
-        def normalize(value):
-            return " ".join(value.split()).casefold()
-
-        if normalize(bold_text) == normalize(line_text) or normalize(bold_text) == normalize(
-            remainder
-        ):
+        # The complete line is bold.
+        if normalize(bold_text) == normalize(line_text):
             title = remainder
 
-    # Separate-line heading: the next line must be entirely bold.
-    elif not remainder and index + 1 < len(lines):
-        next_line = lines[index + 1]
+        # Only the numbered heading label is bold; following text is body content.
+        elif re.match(
+            rf"^{re.escape(number)}\.?\s+.+:\s*$",
+            bold_text,
+        ):
+            title = re.sub(
+                rf"^{re.escape(number)}\.?\s+",
+                "",
+                bold_text,
+            ).strip()
 
-        next_visible = [span for span in next_line if span.get("text", "").strip()]
+    elif not remainder and index + 1 < len(lines):
+        next_visible = [span for span in lines[index + 1] if span.get("text", "").strip()]
 
         if next_visible and all(span.get("flags", 0) & 16 for span in next_visible):
             title = _pdf_line_text(next_visible)
@@ -186,7 +190,37 @@ def parse_pdf(path: Path) -> ParsedDoc:
         if document.is_encrypted:
             raise ParseError("encrypted", path.name)
 
-        title = document.metadata.get("title") or path.stem
+        title = (document.metadata.get("title") or "").strip()
+
+        if not title and len(document) > 0:
+            first_page = document[0]
+            title_candidates = []
+
+            for block in first_page.get_text("dict")["blocks"]:
+                if "lines" not in block:
+                    continue
+
+                for line in block["lines"]:
+                    spans = [span for span in line["spans"] if span.get("text", "").strip()]
+
+                    bold_title_spans = [
+                        span
+                        for span in spans
+                        if span.get("flags", 0) & 16
+                        and span.get("size", 0) >= 10
+                        and span.get("bbox", (0, 0, 0, 0))[1] <= 100
+                    ]
+
+                    if bold_title_spans:
+                        title_text = " ".join(span["text"].strip() for span in bold_title_spans)
+                        y_position = min(span["bbox"][1] for span in bold_title_spans)
+                        title_candidates.append((y_position, title_text))
+
+            if title_candidates:
+                title = min(title_candidates, key=lambda item: item[0])[1]
+
+        if not title:
+            title = path.stem
 
         for index, page in enumerate(document):
             blocks = page.get_text("dict")["blocks"]
@@ -290,6 +324,7 @@ class MainExtractor(HTMLParser):
         self.in_main = False
         self.parts = []
         self.headings = []
+        self.title_heading = None
         self.current_heading_tag = None
         self.current_heading_parts = []
 
@@ -315,6 +350,9 @@ class MainExtractor(HTMLParser):
             if heading:
                 self.headings.append(heading)
 
+                if tag == "h1" and self.title_heading is None:
+                    self.title_heading = heading
+
             self.current_heading_tag = None
             self.current_heading_parts = []
 
@@ -325,8 +363,10 @@ class MainExtractor(HTMLParser):
 def parse_html(path: Path, content: bytes) -> ParsedDoc:
     """Extract HTML content, headings and tables."""
     try:
+        decoded = content.decode("utf-8", errors="replace")
+
         parser = MainExtractor()
-        parser.feed(content.decode("utf-8", errors="replace"))
+        parser.feed(decoded)
 
         main_text = " ".join(parser.parts)
 
@@ -378,7 +418,51 @@ def parse_html(path: Path, content: bytes) -> ParsedDoc:
             raise ParseError("empty", "HTML extraction returned no content")
 
         metadata = trafilatura.extract_metadata(content)
-        title = metadata.title if metadata and metadata.title else path.stem
+
+        sbi_title = re.search(
+            r'<p[^>]*class=["\'][^"\']*\bcard-title\b[^"\']*["\'][^>]*>(.*?)</p>',
+            decoded,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+
+        if sbi_title:
+            title = re.sub(r"\s+", " ", sbi_title.group(1)).strip()
+
+            # Remove the unrelated Education Loan Home footer section.
+            extracted = re.split(
+                r"(?im)^#{1,6}\s+Education Loan Home\s*$",
+                extracted,
+                maxsplit=1,
+            )[0].strip()
+
+            # Remove the SEO/browser title from the document text.
+            if metadata and metadata.title:
+                seo_heading = re.escape(metadata.title.strip())
+                extracted = re.sub(
+                    rf"(?m)^#\s+{seo_heading}\s*$",
+                    "",
+                    extracted,
+                    count=1,
+                ).strip()
+
+            # Rebuild headings from the cleaned document text.
+            headings = []
+            for line in extracted.splitlines():
+                match = re.match(r"^(#{1,6})\s+(.+)", line.strip())
+                if match:
+                    heading = match.group(2).strip()
+                    if heading != metadata.title if metadata else True:
+                        headings.append(heading)
+
+        else:
+            title = (
+                parser.title_heading
+                or (metadata.title if metadata and metadata.title else None)
+                or path.stem
+            )
+
+        if not extracted:
+            raise ParseError("empty", "HTML extraction returned no content")
 
         return ParsedDoc(
             "trafilatura",
@@ -387,7 +471,7 @@ def parse_html(path: Path, content: bytes) -> ParsedDoc:
             [
                 ParsedPage(
                     1,
-                    extracted.strip(),
+                    extracted,
                     headings,
                     tables=extracted.count("| ---"),
                 )
