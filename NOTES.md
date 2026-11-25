@@ -1,4 +1,4 @@
-﻿## D03 â€” LoanLens: PostgreSQL Integration (Day 3 Build Lab)
+## D03 ? LoanLens: PostgreSQL Integration (Day 3 Build Lab)
 
 ## 1. PostgreSQL Integration
 
@@ -112,7 +112,7 @@ Sequential scans were disabled for this diagnostic query to verify index usabili
 
 **D03 Outcome:** PostgreSQL integration, database migrations, idempotent data loading and GIN index verification were successfully completed.
 
-# LoanLens â€” Day 4 Technical Notes
+# LoanLens Ã¢â‚¬â€ Day 4 Technical Notes
 
 ## 8. Docker Configuration
 
@@ -192,7 +192,7 @@ Migration command:
 docker compose logs migrate
 ```
 
-Seed loader â€” first execution:
+Seed loader Ã¢â‚¬â€ first execution:
 
 ```text
 records=20 inserted=20 updated=0 unchanged=0
@@ -333,7 +333,7 @@ Tested using `docker compose restart db`. PostgreSQL restarted successfully, and
 
 ---
 
-## D05 â€” LoanLens: Deployment and CI/CD (Day 5 Build Lab)
+## D05 Ã¢â‚¬â€ LoanLens: Deployment and CI/CD (Day 5 Build Lab)
 
 ## 16. GitHub Actions CI/CD
 
@@ -381,7 +381,7 @@ Implemented least-privilege permissions.
 
 Security improvement:
 
-- PR #13 â€” Security: Scope package write permission to Docker job.
+- PR #13 Ã¢â‚¬â€ Security: Scope package write permission to Docker job.
 - Status: Merged.
 - Commit: `9e8a362`.
 
@@ -467,7 +467,7 @@ Rollback platform: Render
 
 Verify that the production service can be rolled back to a previous successful deployment and subsequently restored to a newer deployment.
 
-### Rollback and Recovery Execution â€” November 21, 2026
+### Rollback and Recovery Execution Ã¢â‚¬â€ November 21, 2026
 
 Two rollback operations were recorded in the Render deployment history.
 
@@ -614,7 +614,7 @@ The application was subsequently deployed successfully through Render Deploy Hoo
 
 ---
 
-# D06 â€” LoanLens: Document Collection and Dataset Capacity
+# D06 Ã¢â‚¬â€ LoanLens: Document Collection and Dataset Capacity
 
 ## 24. Document Collection Pipeline
 
@@ -821,7 +821,7 @@ Verification:
 an isolated local test server and temporary test data.
 
 
-\# D07 â€” LoanLens: Document Parsing and PostgreSQL Page Storage
+\# D07 Ã¢â‚¬â€ LoanLens: Document Parsing and PostgreSQL Page Storage
 
 
 
@@ -981,89 +981,71 @@ Re-ingested the corrected document into PostgreSQL.
 
 \## 38. Parser Comparison
 
+Compared PyMuPDF and pypdf extraction for all 4 available PDF files. HTML extraction was reviewed separately using the current HTML parser.
 
-
-Compared PyMuPDF with pypdf for PDFs and the available extraction approaches for HTML files.
-
-
+### PDF Comparison
 
 | File | Similarity | Verdict |
 |---|---:|---|
-| Baroda Scholar | 80.50% | Targeted cleanup required |
-| IB Education Loan IBA | 100% | Equivalent extraction |
-| Press Release PDF | 98.80% | Near-identical extraction |
-| Education Loan Scheme | 100% | Equivalent extraction |
-| Global Ed-Vantage Scheme | 100% | Equivalent extraction |
-| PM-Vidyalaxmi Guidelines PDF | 83.54% | Review extraction differences |
-| Masters Degree Education Loan | 100% | Equivalent extraction |
-| Global Ed-Vantage MITC PDF | 97.15% | Near-identical extraction |
+| PM-Vidyalaxmi Guidelines | 96.54% | Minor extraction differences |
+| Global Ed-Vantage MITC November 2024 | 62.48% | Review extraction differences |
+| PM-Vidyalaxmi Press Release | 97.57% | Minor extraction differences |
+| PM-Vidyalaxmi Implementation Memorandum | 93.19% | Minor extraction differences |
 
+The percentages are script-reported text similarity measurements, not measures of extraction accuracy. The Global Ed-Vantage MITC result requires manual review.
 
+### HTML Extraction Quality
 
-Summary:
+| File | Characters | Headings | Pages | Extracted title | Verdict |
+|---|---:|---:|---:|---|---|
+| Global Ed-Vantage Scheme | 6,354 | 8 | 1 | Apply Online in India for Studies abroad (above Rs. 20 lakhs) | Review title; unrelated SBI wording detected |
+| Masters Degree Education Loan India and Abroad | 5,378 | 9 | 1 | Education Loan for Masters Degree Abroad | Title and headings extracted |
+| Baroda Scholar Education Loan | 11,919 | 8 | 1 | Baroda Scholar | Targeted extraction cleanup applied |
+| Education Loan Interest Rates | 3,582 | 7 | 1 | Education Loan Scheme - Interest Rates | Title and headings extracted |
+| IB Education Loan IBA | 18,260 | 17 | 1 | Education Loan India - Study Without Limits | Title and headings extracted |
+| PM-Vidyalaxmi Official Portal | 10,309 | 0 | 1 | PM-Vidyalaxmi Scheme – Education Loans Without Collateral | Review heading extraction |
 
-\- 3 PDF files compared.
+HTML character counts and heading counts describe extraction output; they are not similarity scores. HTML results were not compared against an independent second parser.
 
-\- 5 HTML files compared.
+### Summary
 
-\- 8 available files compared successfully.
+- 4 PDF files compared using PyMuPDF and pypdf.
+- 6 HTML files reviewed using the current HTML extraction pipeline.
+- All 10 downloaded files were included.
+- Global Ed-Vantage MITC requires further PDF extraction review.
+- Global Ed-Vantage Scheme has unrelated wording in its extracted title.
+- PM-Vidyalaxmi Official Portal has no detected headings.
+- Baroda Scholar extraction cleanup was applied.
 
-\- PyMuPDF detected PDF headings more effectively than pypdf.
+**Limitation:** HTML extraction quality was inspected, but no independent parser comparison or HTML similarity score was established.
 
-\- Trafilatura performed well for HTML extraction, with targeted cleanup for Baroda Scholar.
+## 39. PostgreSQL Verification
 
-
-
-Only 8 downloaded files were available for comparison; the target of 10 could not be reached because three sources were blocked during collection.
-
-
-
-\## 39. PostgreSQL Verification
-
-
-
-Verified the database after ingestion:
-
-
+Verified the database after ingesting the complete 10-file corpus.
 
 | Database item | Count |
-
 |---|---:|
-
-| Documents | 28 |
-
-| Pages | 33 |
-
+| Total documents | 30 |
+| Parsed documents | 10 |
+| Total pages | 40 |
 | Parse failures | 0 |
+| Pages with headings | 34 |
 
+All 10 downloaded files were parsed and stored successfully, producing 40 pages with no recorded parse failures.
 
-
-The 28 documents include 20 pre-existing records and 8 newly ingested documents.
-
-
-
-\## 40. D07 Summary
-
-
+## 40. D07 Summary
 
 Completed the document parsing and PostgreSQL page-storage pipeline.
 
-
-
 Successfully:
 
-\- Parsed the available PDF and HTML corpus.
+- Parsed all 10 available PDF and HTML files.
+- Stored 10 parsed documents and 40 pages.
+- Added heading metadata and parse-failure tracking.
+- Improved PDF heading detection and added regression tests.
+- Improved Baroda Scholar HTML extraction.
+- Compared PyMuPDF and pypdf on 4 PDFs.
+- Reviewed extraction quality for 6 HTML files.
+- Verified document, page, heading, and failure counts in PostgreSQL.
 
-\- Stored 8 documents and 33 pages.
-
-\- Added heading metadata and parse-failure tracking.
-
-\- Improved Baroda Scholar extraction quality.
-
-\- Compared two PDF parsers and HTML extraction results.
-
-\- Verified database records.
-
-
-
-\*\*Limitation:\*\* Parser comparison covered 8 available files instead of 10 because three sources were blocked during collection.
+**Remaining extraction-quality reviews:** Global Ed-Vantage MITC PDF, Global Ed-Vantage Scheme title, and PM-Vidyalaxmi Portal headings.

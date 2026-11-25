@@ -69,23 +69,76 @@ def detect_kind(path: Path, content: bytes) -> str:
         ) from None
 
 
-def _heading_level(span: dict) -> int | None:
-    """Estimate heading level from font size and bold formatting."""
-    size = span.get("size", 0)
-    flags = span.get("flags", 0)
-    text = span.get("text", "").strip()
+def _pdf_line_text(spans: list[dict]) -> str:
+    """Reconstruct a PDF line from spans, preserving word boundaries."""
+    parts = []
+    previous_end = None
 
-    if not text or len(text) > 150:
+    for span in spans:
+        value = span.get("text", "")
+        if not value:
+            continue
+
+        start = span.get("bbox", (0, 0, 0, 0))[0]
+        size = span.get("size", 10)
+
+        if previous_end is not None and start - previous_end > max(1, size * 0.15):
+            parts.append(" ")
+
+        parts.append(value)
+        previous_end = span.get("bbox", (0, 0, 0, 0))[2]
+
+    return "".join(parts).strip()
+
+
+def _numbered_heading(lines: list[list[dict]], index: int) -> tuple[int, str] | None:
+    """Detect genuine numbered headings, excluding bold text inside paragraphs."""
+    line = lines[index]
+    line_text = _pdf_line_text(line)
+
+    marker = re.match(r"^(\d+(?:\.\d+)*\.?)\s*(.*)$", line_text)
+    if not marker:
         return None
 
-    if size >= 18:
-        return 1
-    if size >= 14 or (flags & 16 and size >= 12):
-        return 2
-    if size >= 11 and flags & 16:
-        return 3
+    number = marker.group(1).rstrip(".")
+    level = len(number.split("."))
 
-    return None
+    if level > 6:
+        return None
+
+    remainder = marker.group(2).strip()
+
+    visible_spans = [span for span in line if span.get("text", "").strip()]
+
+    bold_spans = [span for span in visible_spans if span.get("flags", 0) & 16]
+
+    title = ""
+
+    # Same-line heading: the complete title must be bold.
+    if remainder and bold_spans:
+        bold_text = _pdf_line_text(bold_spans)
+
+        def normalize(value):
+            return " ".join(value.split()).casefold()
+
+        if normalize(bold_text) == normalize(line_text) or normalize(bold_text) == normalize(
+            remainder
+        ):
+            title = remainder
+
+    # Separate-line heading: the next line must be entirely bold.
+    elif not remainder and index + 1 < len(lines):
+        next_line = lines[index + 1]
+
+        next_visible = [span for span in next_line if span.get("text", "").strip()]
+
+        if next_visible and all(span.get("flags", 0) & 16 for span in next_visible):
+            title = _pdf_line_text(next_visible)
+
+    if not title or len(title) > 150:
+        return None
+
+    return level, title
 
 
 def _pdf_tables(page) -> tuple[str, int]:
@@ -137,29 +190,31 @@ def parse_pdf(path: Path) -> ParsedDoc:
 
         for index, page in enumerate(document):
             blocks = page.get_text("dict")["blocks"]
-            lines = []
-            page_headings = []
+            pdf_lines = []
 
             for block in blocks:
                 if "lines" not in block:
                     continue
 
                 for line in block["lines"]:
-                    for span in line["spans"]:
-                        value = span["text"].strip()
-                        if not value:
-                            continue
+                    spans = [span for span in line["spans"] if span.get("text", "").strip()]
+                    if spans:
+                        pdf_lines.append(spans)
 
-                        level = _heading_level(span)
-                        if level:
-                            page_headings.append((level, value))
-
-                        lines.append(value)
-
-            text = "\n".join(lines).strip()
+            # Use PyMuPDF's text reconstruction to preserve normal word spacing.
+            text = page.get_text("text", sort=True).strip()
             total_chars += len(text)
 
+            page_headings = []
+
+            for line_index in range(len(pdf_lines)):
+                heading = _numbered_heading(pdf_lines, line_index)
+
+                if heading:
+                    page_headings.append(heading)
+
             table_markdown, table_count = _pdf_tables(page)
+
             if table_markdown:
                 text += "\n\n" + table_markdown
 
