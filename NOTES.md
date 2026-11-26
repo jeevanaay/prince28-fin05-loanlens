@@ -1976,3 +1976,101 @@ The errors and fallback calls include deliberate provider-failure tests. These a
 - Gemini primary restoration: Verified
 - Usage persistence and aggregation: Verified
 - Production deployment of the gateway: Pending
+
+## D09 · Prompt versions compared
+
+<!-- prompts:start -->
+
+| Prompt version | Correct | Accuracy | Invalid replies | Avg tokens in |
+|---|---|---|---|---|
+| classify_v1 | 15/20 | 75% | 0 | 48 |
+| classify_v2 | 20/20 | 100% | 0 | 252 |
+| classify_v3 | 19/20 | 95% | 0 | 484 |
+| classify_v4 | 20/20 | 100% | 0 | 279 |
+
+<!-- prompts:end -->
+
+### 61. Extraction Prompt Comparison
+
+Five-document trial results:
+
+| Prompt version | Successful | Repaired | Input tokens | Output tokens | Estimated cost |
+|---|---:|---:|---:|---:|---:|
+| extract_v1 | 5/5 | 0 | 14,357 | 916 | ?0.626724 |
+| extract_v2 | 5/5 | 1 | 19,462 | 1,154 | ?0.828743 |
+| extract_v3 | 5/5 | 2 | 24,488 | 1,456 | ?1.043707 |
+| extract_v4 | 5/5 | 2 | 29,946 | 1,656 | ?1.246760 |
+
+Extract_v4 was selected for full-corpus extraction after reviewing the trial outputs and improving extraction instructions for collateral thresholds, subsidy limits and institutional conditions.
+
+### 62. Full-Corpus Metadata Extraction
+
+- Extraction prompt: extract_v4
+- Total source documents: 10
+- Successfully extracted: 10
+- Failed extractions: 0
+- Missing extraction status: 0
+
+All ten source documents were successfully processed. Existing five-document trial results were reused; the remaining documents were processed during the full-corpus run.
+
+### 63. Parsed Documents API
+
+Implemented a separate endpoint:
+
+GET /v1/documents/parsed
+
+Supported query parameters:
+- q: Search document title and metadata.
+- doc_kind: Filter by extracted document kind.
+- language: Filter by language.
+- limit and offset: Pagination.
+
+The response schema preserves descriptive extraction values, including max_amount, collateral_threshold and subsidy_income_limit, as strings.
+
+The existing GET /v1/documents endpoint now returns only records with doc_type='record'. The repository detail lookup was also restricted to loan records to prevent parsed source documents from entering the existing Record response schema.
+
+### 64. Live API Verification
+
+| Endpoint / Filter | Expected | Actual | Result |
+|---|---:|---:|---|
+| GET /v1/documents?limit=100 | 20 | 20 | Passed |
+| GET /v1/documents/parsed?limit=100 | 10 | 10 | Passed |
+| Parsed documents, doc_kind=guideline | 6 | 6 | Passed |
+| Parsed documents, language=en | 10 | 10 | Passed |
+
+All four live API requests returned HTTP 200.
+
+The original response-validation error when requesting 100 loan documents was resolved by separating loan records from parsed source documents.
+
+### 65. Automated Tests and Quality Checks
+
+| Check | Result |
+|---|---|
+| API unit tests | 44 passed |
+| Complete unit test suite | 125 passed |
+| Ruff lint | Passed |
+| Ruff formatting | 86 files formatted |
+| Full-corpus extraction | 10/10 successful |
+| Live loan-record API | Verified |
+| Live parsed-document API | Verified |
+| Document-kind filter | Verified |
+| Language filter | Verified |
+
+The test suite reports an optional PySocks dependency warning from urllib3. It does not cause test failures.
+
+### 66. D09 Verification Summary
+
+- Versioned classifier prompts: Implemented and compared.
+- Classifier evaluation dataset: 20 reviewed examples.
+- Best classifier accuracy: 100% (classify_v2 and classify_v4).
+- Versioned extraction prompts: Implemented and compared.
+- DocMeta structured extraction contract: Implemented.
+- Extraction repair and retry handling: Implemented.
+- Five-document prompt trials: Completed.
+- Full-corpus metadata extraction: 10/10 successful.
+- Parsed-document API: Implemented.
+- Document-kind and language filters: Implemented.
+- Loan-record API separation: Verified.
+- Unit tests and Ruff quality checks: Passed.
+
+D09 Outcome: Versioned classification and metadata extraction workflows are implemented and evaluated. All ten source documents have successfully extracted metadata, and the new parsed-document API has been verified against the local database.

@@ -32,3 +32,4 @@ dist/
 # Local source documents and incomplete downloads
 data/source_docs/
 *.part
+eval/cache/

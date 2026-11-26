@@ -62,6 +62,40 @@ SAMPLE = [
         "subsidy_income_limit": 800000,
     },
 ]
+PARSED_SAMPLE = [
+    {
+        "id": "DOC-001",
+        "title": "PM Vidyalaxmi Guidelines",
+        "source_url": "https://example.com/guidelines",
+        "licence": None,
+        "doc_type": "pdf",
+        "doc_kind": "guideline",
+        "year": 2024,
+        "language": "en",
+        "summary": "Guidelines for the PM Vidyalaxmi education loan scheme.",
+        "topics": ["education loan", "interest subsidy"],
+        "scheme": "PM-Vidyalaxmi",
+        "max_amount": "No highest amount cap",
+        "collateral_threshold": None,
+        "subsidy_income_limit": "Up to ₹8 lakh: 3% interest subsidy",
+    },
+    {
+        "id": "DOC-002",
+        "title": "Canara Bank Education Loan Notice",
+        "source_url": "https://example.com/notice",
+        "licence": None,
+        "doc_type": "html",
+        "doc_kind": "notice",
+        "year": 2025,
+        "language": "en",
+        "summary": "Notice describing education loan conditions from Canara Bank.",
+        "topics": ["education loan", "collateral"],
+        "scheme": "Canara Bank Masters Abroad",
+        "max_amount": "₹100 lakh",
+        "collateral_threshold": "100% collateral for loans above the stated limit",
+        "subsidy_income_limit": None,
+    },
+]
 
 
 class FakeRepository:
@@ -120,6 +154,30 @@ class FakeRepository:
                 null_rows,
                 key=lambda row: row["id"],
             )
+
+        return rows
+
+    async def search_parsed(
+        self,
+        q=None,
+        doc_kind=None,
+        language=None,
+    ):
+        rows = PARSED_SAMPLE
+
+        if q:
+            needle = q.lower()
+            rows = [
+                row
+                for row in rows
+                if needle in row["title"].lower() or needle in row["summary"].lower()
+            ]
+
+        if doc_kind:
+            rows = [row for row in rows if row["doc_kind"] == doc_kind]
+
+        if language:
+            rows = [row for row in rows if row["language"] == language]
 
         return rows
 

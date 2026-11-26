@@ -3,7 +3,11 @@ from typing import Annotated, Any, Literal
 from fastapi import APIRouter, HTTPException, Query
 
 from loanlens.api.deps import RepositoryDep
-from loanlens.api.schemas import DocumentListResponse, Record
+from loanlens.api.schemas import (
+    DocumentListResponse,
+    ParsedDocumentListResponse,
+    Record,
+)
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -47,6 +51,31 @@ async def get_document_stats(
 ) -> dict[str, Any]:
     """Return aggregate statistics about stored documents."""
     return await repository.stats()
+
+
+@router.get("/parsed", response_model=ParsedDocumentListResponse)
+async def list_parsed_documents(
+    repository: RepositoryDep,
+    q: Annotated[str | None, Query(max_length=200)] = None,
+    doc_kind: Annotated[str | None, Query(max_length=50)] = None,
+    language: Annotated[str | None, Query(max_length=10)] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> dict[str, Any]:
+    """List successfully extracted source documents."""
+
+    rows = await repository.search_parsed(
+        q=q,
+        doc_kind=doc_kind,
+        language=language,
+    )
+
+    return {
+        "total": len(rows),
+        "limit": limit,
+        "offset": offset,
+        "items": rows[offset : offset + limit],
+    }
 
 
 @router.get("/{doc_id}", response_model=Record)

@@ -46,6 +46,12 @@ Students planning higher education who need help understanding education-loan op
 - Search documents using text queries.
 - Filter records by lender and scheme.
 - Retrieve individual documents by ID.
+- Parse collected source documents and extract structured metadata using versioned LLM prompts.
+- Validate extracted metadata against a strict Pydantic schema.
+- Retry invalid model responses with validation feedback.
+- Track extraction status, attempts, token usage, and estimated cost.
+- Search parsed source documents separately from loan-scheme records.
+- Filter parsed documents by document kind and language.
 
 ### API Filtering and Sorting
 
@@ -78,6 +84,8 @@ Students planning higher education who need help understanding education-loan op
 - Input/output token estimates and INR cost estimates.
 - Versioned LoanLens system prompt loaded from `prompts/chat_system_v1.md`.
 - Local command-line client at `scripts/ask.py` for testing chat responses.
+- Versioned classification and metadata-extraction prompts.
+- Prompt-version comparison using a labelled evaluation testset.
 
 > **Important:** The current system prompt provides general LoanLens guidance. Scheme documents are not connected to the assistant yet. Responses should not be treated as verified scheme-specific advice. Users should confirm eligibility, rates, and policy conditions with official sources.
 
@@ -117,22 +125,34 @@ Students planning higher education who need help understanding education-loan op
 
 ## Project Structure
 
-```text
+
 prince28-fin05-loanlens/
 ├── data/
 │   └── sample_records.json
 ├── docs/
 │   ├── QUESTIONS.md
 │   └── REQUIREMENTS.md
+├── eval/
+│   └── prompt_testset.jsonl
 ├── migrations/
 │   └── versions/
 ├── prompts/
-│   └── chat_system_v1.md
+│   ├── chat_system_v1.md
+│   ├── classify_v1.md
+│   ├── classify_v2.md
+│   ├── classify_v3.md
+│   ├── classify_v4.md
+│   ├── extract_v1.md
+│   ├── extract_v2.md
+│   ├── extract_v3.md
+│   └── extract_v4.md
 ├── scripts/
 │   ├── ask.py
+│   ├── compare_prompts.py
 │   ├── dataset_report.py
 │   ├── db_check.py
 │   ├── explain_gin.py
+│   ├── extract_metadata.py
 │   ├── fetch.py
 │   ├── load_db.py
 │   ├── parse_corpus.py
@@ -160,8 +180,12 @@ prince28-fin05-loanlens/
 │       │   ├── parse.py
 │       │   └── store.py
 │       ├── llm/
+│       │   ├── classify.py
+│       │   ├── doc_meta.py
+│       │   ├── extract.py
 │       │   ├── gateway.py
-│       │   └── gemini.py
+│       │   ├── gemini.py
+│       │   └── prompts.py
 │       ├── config.py
 │       ├── logging_setup.py
 │       └── store.py
@@ -169,14 +193,17 @@ prince28-fin05-loanlens/
 │   ├── conftest.py
 │   └── unit/
 │       ├── conftest.py
+│       ├── test_api.py
 │       ├── test_chat_api.py
+│       ├── test_classify.py
+│       ├── test_extract.py
 │       └── test_gateway.py
 ├── .env.example
 ├── Dockerfile
 ├── docker-compose.yml
 ├── README.md
 └── pyproject.toml
-```
+
 
 The tree highlights the main application files and may omit additional tests, migrations, configuration files, or supporting modules.
 
@@ -248,6 +275,7 @@ Once the application is running, interactive API documentation is available at:
 | GET | `/v1/documents/stats` | Document statistics |
 | POST | `/v1/chat` | Chat with the LoanLens LLM gateway |
 | GET | `/v1/usage` | Daily LLM usage and estimated costs |
+| GET | `/v1/documents/parsed` | List and filter successfully parsed source documents |
 
 ### Example Document API Requests
 
@@ -287,6 +315,29 @@ GET /v1/documents?sort_by=max_amount&sort_order=desc
 GET /v1/documents/001
 ```
 
+**List parsed source documents**
+
+```http
+GET /v1/documents/parsed
+```
+
+**Filter parsed documents by kind**
+
+```http
+GET /v1/documents/parsed?doc_kind=guideline
+```
+
+**Filter parsed documents by language**
+
+```http
+GET /v1/documents/parsed?language=en
+```
+
+**Search parsed documents**
+
+```http
+GET /v1/documents/parsed?q=education
+```
 ### Chat API
 
 The chat endpoint supports both streaming and non-streaming responses. The request body contains a user message and a streaming preference.
@@ -623,6 +674,27 @@ The usage snapshot includes deliberate provider-failure and fallback tests. Thes
 
 > **Deployment note:** The gateway has been verified locally. Production deployment and production endpoint verification remain pending.
 
+### Day 9 — Prompt Evaluation, Metadata Extraction and Parsed Documents API
+
+| Check | Result |
+|---|---|
+| Classifier evaluation dataset | 20 examples |
+| Classifier prompt v2 accuracy | 100% (20/20) |
+| Classifier prompt v4 accuracy | 100% (20/20) |
+| Metadata extraction prompt versions | v1–v4 evaluated |
+| Full-corpus metadata extraction | 10/10 successful |
+| Failed metadata extractions | 0 |
+| Parsed documents API | HTTP 200 |
+| Parsed document kind filter | HTTP 200 |
+| Parsed document language filter | HTTP 200 |
+| Parsed document ID through loan-record lookup | HTTP 404 as expected |
+| Unit tests | 125 passed |
+| Ruff lint | Passed |
+| Ruff formatting | Passed |
+
+The classifier evaluation used a 20-example labelled testset. Prompt versions 2 and 4 achieved the highest accuracy, with 20 correct classifications each.
+
+Metadata extraction was completed for all 10 parsed source documents using `extract_v4`. The parsed-documents endpoint was verified against the local database, including kind and language filters. Parsed source document IDs correctly return 404 from the loan-record lookup endpoint.
 ---
 
 ## Data Sources
@@ -699,9 +771,11 @@ These are project targets, not yet claimed production results.
 - [x] Day 8: PostgreSQL LLM call recording and daily usage endpoint.
 - [x] Day 8: Versioned system prompt and CLI testing client.
 - [x] Day 8: Live Groq fallback and circuit-breaker verification using a controlled primary-provider failure.
-- [ ] Next: Deploy the updated LLM gateway and configure production secrets.
-- [ ] Future: Connect verified scheme documents to retrieval.
-- [ ] Future: Loan eligibility engine, EMI calculator, and loan comparison interface.
+- [x] Day 9: Versioned classification prompts and labelled prompt evaluation.
+- [x] Day 9: Pydantic metadata schema and versioned extraction prompts.
+- [x] Day 9: Full-corpus metadata extraction with validation, retries, and usage tracking.
+- [x] Day 9: Separate parsed-documents API with search, kind/language filters, and pagination.
+- [x] Day 9: Unit tests, lint/format checks, and live API verification.
 
 ---
 
@@ -709,11 +783,11 @@ These are project targets, not yet claimed production results.
 
 LoanLens has a FastAPI backend with PostgreSQL integration, database migrations, document search and filtering, sorting, statistics, and monitoring endpoints. The project also includes a document collection and resumable-fetch pipeline, document parsing with PostgreSQL page storage, and a configurable LLM gateway with chat API, usage recording, and a local CLI client.
 
-The Day 8 gateway implementation has passed the local test suite (100 tests) and lint/format checks. Gemini primary chat, Groq fallback, and circuit-breaker behavior were verified locally using controlled provider-failure tests. The original Gemini primary model was restored and tested successfully.
+The Day 9 implementation adds versioned classification and metadata-extraction prompts, a labelled prompt evaluation dataset, Pydantic-based metadata validation, and full-corpus metadata extraction. All 10 parsed source documents were successfully processed using `extract_v4`. A separate parsed-documents API supports search, filtering, and pagination without mixing source documents with loan-scheme records.
 
-The new chat and usage functionality still needs to be deployed and configured in the production environment before being advertised as live.
+The Day 9 implementation passed 125 unit tests, Ruff linting, and formatting checks. Local API verification confirmed successful parsed-document listing and filtering, while parsed source document IDs correctly return HTTP 404 from the loan-record lookup endpoint.
 
-The next development phase focuses on deploying the updated gateway, configuring production secrets, connecting authoritative scheme documents, and expanding the loan eligibility and repayment calculation capabilities.
+The chat assistant is not yet connected to the extracted scheme metadata. The next development phase focuses on deploying the updated gateway, configuring production secrets, connecting authoritative scheme documents to retrieval, and expanding loan eligibility and repayment calculation capabilities.
 
 ---
 

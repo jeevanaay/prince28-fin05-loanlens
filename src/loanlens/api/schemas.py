@@ -31,3 +31,33 @@ class DocumentListResponse(BaseModel):
     limit: int
     offset: int
     items: list[Record]
+
+
+class ParsedDocument(BaseModel):
+    """Successfully extracted source document metadata."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    title: str
+    source_url: str | None = None
+    licence: str | None = None
+    doc_type: str
+    doc_kind: str
+    year: int | None = None
+    language: str
+    summary: str
+    topics: list[str]
+    scheme: str | None = None
+    max_amount: str | None = None
+    collateral_threshold: str | None = None
+    subsidy_income_limit: str | None = None
+
+
+class ParsedDocumentListResponse(BaseModel):
+    """Paginated extracted source documents."""
+
+    total: int
+    limit: int
+    offset: int
+    items: list[ParsedDocument]
