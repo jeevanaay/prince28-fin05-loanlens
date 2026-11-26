@@ -2095,3 +2095,18 @@ Compared five extracted source-document records against their corresponding offi
 **Improvement identified**
 
 The extraction prompt should preserve the complete meaning of threshold-based rules, including both sides of a threshold, applicable institution categories, and associated eligibility conditions. When a field cannot represent multiple conditions accurately, the model should avoid presenting a partial condition as the complete rule.
+
+## Manual Extraction Verification
+
+Manually verified five guideline records against their original source documents:
+
+1. Bank of Baroda – Baroda Scholar
+2. Indian Bank – IBA Model Educational Loan Scheme
+3. SBI – Global Ed-Vantage Scheme
+4. PM-Vidyalaxmi Guidelines
+5. Canara Bank – Education Loan for Masters Degree Abroad
+
+### Extraction Discrepancies Identified
+
+- **Bank of Baroda:** The collateral conditions were incompletely extracted.
+- **Canara Bank:** The extraction missed the minimum loan amount (above Rs. 7.50 lakh) and left the collateral threshold as null. The official scheme specifies collateral coverage from 50% to 100%, subject to terms and conditions.
