@@ -12,12 +12,17 @@ from loanlens.api.schemas import (
 router = APIRouter(prefix="/documents", tags=["documents"])
 
 
-@router.get("", response_model=DocumentListResponse)
+@router.get(
+    "",
+    response_model=DocumentListResponse | ParsedDocumentListResponse,
+)
 async def list_documents(
     repository: RepositoryDep,
     q: Annotated[str | None, Query(max_length=200)] = None,
     lender: Annotated[str | None, Query(max_length=100)] = None,
     scheme: Annotated[str | None, Query(max_length=200)] = None,
+    doc_kind: Annotated[str | None, Query(max_length=50)] = None,
+    language: Annotated[str | None, Query(max_length=10)] = None,
     sort_by: Annotated[
         Literal["external_id", "lender", "scheme", "max_amount", "published_on"],
         Query(),
@@ -29,13 +34,20 @@ async def list_documents(
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> dict:
-    rows = await repository.search(
-        q=q,
-        lender=lender,
-        scheme=scheme,
-        sort_by=sort_by,
-        sort_order=sort_order,
-    )
+    if doc_kind is not None or language is not None:
+        rows = await repository.search_parsed(
+            q=q,
+            doc_kind=doc_kind,
+            language=language,
+        )
+    else:
+        rows = await repository.search(
+            q=q,
+            lender=lender,
+            scheme=scheme,
+            sort_by=sort_by,
+            sort_order=sort_order,
+        )
 
     return {
         "total": len(rows),
