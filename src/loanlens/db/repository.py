@@ -46,7 +46,7 @@ class DocumentRepository:
     ) -> list[dict[str, Any]]:
         """Search documents with filtering and database-level sorting."""
 
-        statement = select(Document)
+        statement = select(Document).where(Document.doc_type == "record")
 
         if q:
             pattern = f"%{q}%"
@@ -91,8 +91,76 @@ class DocumentRepository:
         result = await self.session.scalars(statement)
         return [self._serialize(document) for document in result.all()]
 
+    async def search_parsed(
+        self,
+        q: str | None = None,
+        doc_kind: str | None = None,
+        language: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Return successfully extracted source documents."""
+
+        statement = select(Document).where(
+            Document.doc_type != "record",
+            Document.metadata_["extract"]["status"].astext == "ok",
+        )
+
+        if q:
+            pattern = f"%{q}%"
+            statement = statement.where(
+                func.concat(
+                    Document.title,
+                    " ",
+                    cast(Document.metadata_, Text),
+                ).ilike(pattern)
+            )
+
+        if doc_kind:
+            statement = statement.where(Document.metadata_["doc_kind"].astext == doc_kind)
+
+        if language:
+            statement = statement.where(Document.metadata_["language"].astext == language)
+
+        statement = statement.order_by(Document.external_id.asc())
+
+        result = await self.session.scalars(statement)
+
+        fields = (
+            "doc_kind",
+            "year",
+            "language",
+            "summary",
+            "topics",
+            "scheme",
+            "max_amount",
+            "collateral_threshold",
+            "subsidy_income_limit",
+        )
+
+        documents = []
+
+        for document in result.all():
+            metadata = document.metadata_ or {}
+
+            documents.append(
+                {
+                    "id": document.external_id,
+                    "title": document.title,
+                    "source_url": document.source_url,
+                    "licence": document.licence,
+                    "doc_type": document.doc_type,
+                    **{field: metadata.get(field) for field in fields},
+                }
+            )
+
+        return documents
+
     async def get(self, document_id: str) -> dict[str, Any] | None:
-        statement = select(Document).where(Document.external_id == document_id)
+        """Retrieve a loan record by its external ID."""
+
+        statement = select(Document).where(
+            Document.external_id == document_id,
+            Document.doc_type == "record",
+        )
         document = await self.session.scalar(statement)
 
         if document is None:

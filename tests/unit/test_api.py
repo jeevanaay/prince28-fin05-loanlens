@@ -414,3 +414,93 @@ async def test_get_db_session_yields_session():
 
     with pytest.raises(StopAsyncIteration):
         await anext(generator)
+
+
+# Parsed document endpoint tests
+
+
+def test_list_parsed_documents_returns_extracted_documents(client):
+    r = client.get("/v1/documents/parsed")
+    body = r.json()
+
+    assert r.status_code == 200
+    assert body["total"] == 2
+    assert body["limit"] == 20
+    assert body["offset"] == 0
+    assert len(body["items"]) == 2
+    assert body["items"][0]["id"] == "DOC-001"
+    assert body["items"][0]["doc_kind"] == "guideline"
+
+
+def test_filter_parsed_documents_by_doc_kind(client):
+    r = client.get(
+        "/v1/documents/parsed",
+        params={"doc_kind": "guideline"},
+    )
+
+    assert r.status_code == 200
+    assert r.json()["total"] == 1
+    assert r.json()["items"][0]["id"] == "DOC-001"
+
+
+def test_filter_parsed_documents_by_language(client):
+    r = client.get(
+        "/v1/documents/parsed",
+        params={"language": "en"},
+    )
+
+    assert r.status_code == 200
+    assert r.json()["total"] == 2
+
+
+def test_search_parsed_documents(client):
+    r = client.get(
+        "/v1/documents/parsed",
+        params={"q": "Canara"},
+    )
+
+    assert r.status_code == 200
+    assert r.json()["total"] == 1
+    assert r.json()["items"][0]["id"] == "DOC-002"
+
+
+def test_parsed_documents_support_pagination(client):
+    r = client.get(
+        "/v1/documents/parsed",
+        params={"limit": 1, "offset": 1},
+    )
+
+    body = r.json()
+
+    assert r.status_code == 200
+    assert body["total"] == 2
+    assert len(body["items"]) == 1
+    assert body["items"][0]["id"] == "DOC-002"
+
+
+def test_parsed_documents_preserve_descriptive_amounts(client):
+    r = client.get("/v1/documents/parsed")
+
+    assert r.status_code == 200
+
+    first = r.json()["items"][0]
+    assert first["max_amount"] == "No highest amount cap"
+    assert first["subsidy_income_limit"] == "Up to ₹8 lakh: 3% interest subsidy"
+
+
+def test_parsed_documents_reject_invalid_limit(client):
+    r = client.get(
+        "/v1/documents/parsed",
+        params={"limit": 0},
+    )
+
+    assert r.status_code == 422
+
+
+def test_parsed_documents_reject_negative_offset(client):
+    r = client.get(
+        "/v1/documents/parsed",
+        params={"offset": -1},
+    )
+
+    assert r.status_code == 422
