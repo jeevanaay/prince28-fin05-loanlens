@@ -1,4 +1,4 @@
-# LoanLens – Technical Notes
+﻿# LoanLens – Technical Notes
 
 ## D03 – PostgreSQL Integration
 
@@ -2074,3 +2074,24 @@ The test suite reports an optional PySocks dependency warning from urllib3. It d
 - Unit tests and Ruff quality checks: Passed.
 
 D09 Outcome: Versioned classification and metadata extraction workflows are implemented and evaluated. All ten source documents have successfully extracted metadata, and the new parsed-document API has been verified against the local database.
+### 67. Manual Metadata Validation and Extraction Findings
+
+Compared five extracted source-document records against their corresponding official source documents.
+
+**Documents reviewed**
+1. Bank of Baroda – Baroda Scholar
+2. Indian Bank – IBA Model Educational Loan Scheme
+3. SBI – Global Ed-Vantage Scheme webpage
+4. SBI – Global Ed-Vantage Scheme MITC PDF
+5. PM-Vidyalaxmi Scheme Guidelines
+
+**Findings**
+
+- Baroda Scholar: The extracted `collateral_threshold` captured the third-party guarantee range above Rs. 4 lakh up to Rs. 7.50 lakh but omitted the other security bands: no security up to Rs. 4 lakh, 100% tangible collateral above Rs. 7.50 lakh up to Rs. 80 lakh, and 1.25-times security coverage above Rs. 80 lakh.
+- Indian Bank IBA: The extracted value `Rs. 40 Lakhs for Premier Elite Category` did not preserve the meaning of the source. The source specifies no collateral up to Rs. 40 lakh for Premier Elite institutions and full collateral beyond Rs. 40 lakh.
+- SBI Global Ed-Vantage: The extracted maximum loan amount of Rs. 3 crore and collateral-free limit of Rs. 50 lakh for select institutions agreed with the source.
+- PM-Vidyalaxmi: The extracted subsidy field did not preserve the Rs. 10 lakh loan cap for 3% subvention or the separate eligibility conditions for full interest subvention under PM-USP CSIS.
+
+**Improvement identified**
+
+The extraction prompt should preserve the complete meaning of threshold-based rules, including both sides of a threshold, applicable institution categories, and associated eligibility conditions. When a field cannot represent multiple conditions accurately, the model should avoid presenting a partial condition as the complete rule.
