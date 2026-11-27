@@ -792,3 +792,50 @@ The chat assistant is not yet connected to the extracted scheme metadata. The ne
 ---
 
 Built as an education-loan information assistant project.
+
+## Week 2 - Ingestion Queue Reliability
+
+### Completed
+
+- Implemented asynchronous document ingestion using FastAPI, PostgreSQL, Redis and ARQ.
+- Ingestion API returns HTTP 202 while background processing continues.
+- Job progress can be checked using `GET /v1/ingest/{job_id}`.
+- Repeated batch submissions select subsequent eligible records.
+- Added persistent `ingest_jobs` and `ingest_items` tables through a database migration.
+- Added a dedicated worker service in Docker Compose.
+- Worker code merged into `main`; CI checks passed.
+- Unauthenticated production ingestion requests return HTTP 401.
+- Authenticated production dead-letter endpoint returned HTTP 200 with zero items.
+- Verified local worker restart recovery using PostgreSQL unfinished-item records.
+- Verified reconstruction of missing Redis queue entries from PostgreSQL.
+- Documented recovery tests in `docs/INGEST_REPORT.md`.
+- Published the `week-2` GitHub tag.
+
+### Recovery Test Results
+
+- Worker restart recovery: passed.
+- Redis queue reconstruction: passed.
+- Recovered synthetic item attempts increased from 1 to 2.
+- Synthetic test records were cleaned up after testing.
+
+### Pending Verification
+
+- Complete the 20-item worker kill test.
+- Record final queued, running, done and failed counts.
+- Verify zero lost items and zero duplicate documents across the 20-item test.
+- Verify authenticated production ingestion returns HTTP 202 and production job progress is available. Perform only after collection approval evidence is documented.
+
+### Local verification - 27 November 2026
+
+- Local API health endpoint returned `status: ok`.
+- OpenAPI confirmed the ingestion submission, job progress, and dead-letter routes.
+- Unauthenticated local `POST /v1/ingest` returned HTTP 401.
+- Authenticated local no-match submission was accepted and returned `queued: 0`; no job was created.
+- Local dead-letter endpoint returned zero items.
+- Database baseline after verification: 0 ingestion jobs, 0 ingestion items, and 20 existing documents.
+- API, PostgreSQL, Redis, and worker containers were running; API and database reported healthy.
+
+Verification limitation:
+- This check did not create a new ingestion job or verify a new HTTP 202 response.
+- The full 20-item kill test and its zero-loss/zero-duplicate result remain pending verification.
+- Production authenticated ingestion and production job progress remain pending verification. Do not submit production documents until collection approval evidence is documented.
