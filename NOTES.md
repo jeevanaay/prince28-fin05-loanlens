@@ -2135,3 +2135,59 @@ Manually verified five guideline records against their original source documents
 - Current report: 40 pages.
 - Difference: 12 additional pages, a 42.9% increase.
 - Token comparison: Monday's CAPACITY.md does not record a token estimate, so a token-to-token comparison is unavailable.
+
+## Week 2 - Queue reliability verification update (27 November 2026)
+
+### Completed and verified
+
+- Local ingestion API supports asynchronous job submission; the user observed HTTP 202 before background processing.
+- Job progress endpoint was used locally through the browser.
+- Repeated batch submission selected the next batch rather than the same records, as observed during the local run.
+- Worker code and queue implementation are merged into `main`; CI checks passed.
+- Database migration creates `ingest_jobs` and `ingest_items`.
+- Docker Compose includes a dedicated worker service.
+- Production unauthenticated `POST /v1/ingest` was tested through Render Swagger and returned HTTP 401.
+- Authenticated production `GET /v1/ingest/dead-letter` returned HTTP 200 with `count: 0` and an empty item list.
+- The `week-2` Git tag was pushed to GitHub.
+- `docs/INGEST_REPORT.md` contains the worker restart and Redis queue reconstruction test reports.
+
+### Local recovery tests
+
+1. Worker restart recovery: a synthetic running item was recovered from PostgreSQL after restarting the worker.
+2. Redis queue reconstruction: a synthetic running item was recovered when its corresponding Redis queue entry was absent.
+3. Both tests executed the recovered item and incremented its attempt count from 1 to 2.
+4. Both synthetic test jobs were deleted after verification.
+
+### Current local database baseline
+
+- Ingestion jobs: 0
+- Ingestion items: 0
+- Documents: 20
+
+### Still pending verification
+
+- Full 20-item worker kill test with measured zero lost and zero duplicated items.
+- Record the frozen queued, running, done, and failed counts.
+- Verify that all 20 items are accounted for: done + skipped + failed = 20, with no queued or running items remaining.
+- Verify that the resulting documents are unique.
+- Authenticated production `POST /v1/ingest` returning HTTP 202.
+- Production `GET /v1/ingest/{job_id}` showing progress. Do not trigger production ingestion until collection approval evidence is documented.
+
+### Important distinction
+
+The one-item worker restart and Redis queue reconstruction tests passed locally. They do not constitute the full 20-item kill test or prove zero lost and zero duplicated documents for that test.
+
+### Local verification - 27 November 2026
+
+- Local API health endpoint returned `status: ok`.
+- OpenAPI confirmed the ingestion submission, job progress, and dead-letter routes.
+- Unauthenticated local `POST /v1/ingest` returned HTTP 401.
+- Authenticated local no-match submission was accepted and returned `queued: 0`; no job was created.
+- Local dead-letter endpoint returned zero items.
+- Database baseline after verification: 0 ingestion jobs, 0 ingestion items, and 20 existing documents.
+- API, PostgreSQL, Redis, and worker containers were running; API and database reported healthy.
+
+Verification limitation:
+- This check did not create a new ingestion job or verify a new HTTP 202 response.
+- The full 20-item kill test and its zero-loss/zero-duplicate result remain pending verification.
+- Production authenticated ingestion and production job progress remain pending verification. Do not submit production documents until collection approval evidence is documented.
