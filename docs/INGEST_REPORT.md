@@ -38,3 +38,24 @@ Model calls for extraction: 33 Â· tokens in 119,374 Â· tokens out 6,539 Â·
 6. Deleted the synthetic test job and verified that no test records remained.
 
 **Result:** Local worker restart recovery successfully verified. PostgreSQL retained the unfinished job and the worker restored it to Redis.
+
+## Redis queue reconstruction test - 27 November 2026
+
+### Objective
+Verify that the worker can reconstruct missing Redis queue entries using unfinished ingestion records stored in PostgreSQL.
+
+### Test procedure
+1. Checked the local Redis database and confirmed there were no existing ingestion jobs.
+2. Created a synthetic ingestion job in PostgreSQL with its item status set to `running` and attempts set to 1.
+3. Restarted the worker while the Redis queue had no corresponding ingestion job.
+4. Observed the worker startup recovery process.
+5. Verified that the worker detected one unfinished item and re-enqueued it.
+6. Confirmed that the worker executed the reconstructed job and incremented its attempt count to 2.
+7. The synthetic item failed as expected because collection approval evidence was intentionally omitted.
+8. Deleted the synthetic job and verified that no test job remained.
+
+### Result
+Successful. The worker reconstructed a missing Redis queue entry from PostgreSQL and executed the corresponding ingestion item.
+
+### Scope and limitation
+This test verifies missing queue-entry reconstruction from PostgreSQL. It does not verify an actual Redis server crash, RDB/AOF restoration, or concurrent duplicate-execution prevention.
