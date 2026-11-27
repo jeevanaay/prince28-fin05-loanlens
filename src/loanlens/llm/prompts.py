@@ -3,7 +3,7 @@
 import re
 from pathlib import Path
 
-PROMPT_DIR = Path(__file__).resolve().parents[3] / "prompts"
+PROMPT_DIR = Path("prompts")
 
 
 def list_versions(task: str) -> list[Path]:

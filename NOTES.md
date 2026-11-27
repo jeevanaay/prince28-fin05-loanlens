@@ -2110,3 +2110,28 @@ Manually verified five guideline records against their original source documents
 
 - **Bank of Baroda:** The collateral conditions were incompletely extracted.
 - **Canara Bank:** The extraction missed the minimum loan amount (above Rs. 7.50 lakh) and left the collateral threshold as null. The official scheme specifies collateral coverage from 50% to 100%, subject to terms and conditions.
+
+### D10 · Queue and worker
+
+- Current database baseline: 10 documents, 40 pages, 0 dead-letter items.
+- Queue activity: No ingestion jobs have been started yet. First queue run is pending.
+- Worker configuration: INGEST_RPM = 12, INGEST_CONCURRENCY = 2.
+
+### Kill test
+
+- Status: Pending. No kill test has been performed or verified yet.
+
+### Dead-letter list
+
+- Current count: 0 items.
+
+### Live ingestion
+
+- Status: Pending. Live ingestion has not been performed.
+
+### Week 2 against Monday's estimate
+
+- Monday's baseline: 28 pages.
+- Current report: 40 pages.
+- Difference: 12 additional pages, a 42.9% increase.
+- Token comparison: Monday's CAPACITY.md does not record a token estimate, so a token-to-token comparison is unavailable.
