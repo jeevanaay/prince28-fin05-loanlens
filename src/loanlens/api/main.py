@@ -1,7 +1,8 @@
 """App factory: build a fully wired FastAPI app from settings."""
 
+import asyncio
 import logging
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import APIRouter, FastAPI
 
@@ -34,9 +35,29 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         logger.info("database session factory initialized")
         logger.info("LLM gateway initialized")
 
+        worker_task = None
+
+        if settings.worker_in_api:
+            from loanlens.workers.main import run_embedded
+
+            worker_task = asyncio.create_task(
+                run_embedded(settings),
+                name="loanlens-embedded-worker",
+            )
+            app.state.worker_task = worker_task
+            logger.info("embedded worker startup requested")
+        else:
+            logger.info("embedded worker disabled; WORKER_IN_API is false")
+
         try:
             yield
         finally:
+            if worker_task is not None:
+                worker_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await worker_task
+                logger.info("embedded worker stopped")
+
             queue = getattr(app.state, "queue", None)
             if queue is not None:
                 await queue.close()
