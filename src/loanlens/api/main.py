@@ -7,7 +7,7 @@ from fastapi import APIRouter, FastAPI
 
 from loanlens.api.errors import register_error_handlers
 from loanlens.api.middleware import request_context
-from loanlens.api.routes import chat, documents, health
+from loanlens.api.routes import chat, documents, health, ingest
 from loanlens.api.routes.chat import load_prompt
 from loanlens.config import Settings, get_settings
 from loanlens.db.llm_calls import DatabaseRecorder
@@ -37,6 +37,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             yield
         finally:
+            queue = getattr(app.state, "queue", None)
+            if queue is not None:
+                await queue.close()
+                logger.info("Redis queue connection closed")
+
             await engine.dispose()
             logger.info("database engine disposed")
 
@@ -55,6 +60,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     v1 = APIRouter(prefix="/v1")
     v1.include_router(documents.router)
     v1.include_router(chat.router)
+    v1.include_router(ingest.router)
 
     app.include_router(health.router)
     app.include_router(v1)
