@@ -680,7 +680,7 @@ def parse_data(path: Path, content: bytes) -> ParsedDoc:
             )
 
         elif path.suffix.lower() == ".csv":
-            rows = list(csv.reader(io.StringIO(raw)))
+            rows = list(csv.reader(io.StringIO(raw, newline="")))
 
             if not rows:
                 raise ParseError("empty", "CSV contains no rows")
