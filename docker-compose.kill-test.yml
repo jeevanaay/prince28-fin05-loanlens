@@ -1,0 +1,6 @@
+﻿services:
+  api:
+    environment:
+      MANIFEST_FILE: /app/data/kill-test-manifest.jsonl
+    volumes:
+      - ./data/kill-test-manifest.jsonl:/app/data/kill-test-manifest.jsonl:ro

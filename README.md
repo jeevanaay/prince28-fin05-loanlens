@@ -9,7 +9,7 @@ LoanLens aims to simplify education financing for students planning higher studi
 - **API documentation:** https://prince28-fin05-loanlens.onrender.com/docs
 - **Production health:** Health check · Database readiness
 
-> **Deployment note:** The existing backend deployment and monitoring links are retained here. The Day 8 LLM gateway work described below has been implemented and verified locally. Deploy the updated revision and configure its production secrets before treating the new chat and usage endpoints as available on the live service.
+> **Deployment note:** The backend, LLM gateway, chat/usage APIs, and ingestion-worker functionality have since been deployed and verified on the production service. The live API and Swagger links above point to the Render deployment. Scheme-specific retrieval and advice are still not enabled; the chat assistant must not be treated as a verified source of scheme eligibility or loan terms.
 
 ---
 
@@ -631,7 +631,7 @@ uv run python -m compileall -q src scripts tests migrations
 
 ---
 
-## Current Verification Status
+## Day 8 Verification Snapshot
 
 The Day 8 LLM gateway implementation has been tested locally.
 
@@ -672,7 +672,7 @@ The usage snapshot includes deliberate provider-failure and fallback tests. Thes
 - The configured cooldown was observed during spaced requests.
 - The original Gemini model was restored and successfully tested again.
 
-> **Deployment note:** The gateway has been verified locally. Production deployment and production endpoint verification remain pending.
+> **Deployment note:** The LLM gateway deployment and production verification were completed on 28 November 2026. Gemini is configured as the primary provider and Groq as the fallback. The chat assistant is still not connected to retrieved scheme documents.
 
 ### Day 9 — Prompt Evaluation, Metadata Extraction and Parsed Documents API
 
@@ -776,18 +776,24 @@ These are project targets, not yet claimed production results.
 - [x] Day 9: Full-corpus metadata extraction with validation, retries, and usage tracking.
 - [x] Day 9: Separate parsed-documents API with search, kind/language filters, and pagination.
 - [x] Day 9: Unit tests, lint/format checks, and live API verification.
+- [x] Day 10: Persistent ingestion jobs/items, worker restart recovery, and Redis queue reconstruction.
+- [x] Day 10: Twenty-item synthetic worker kill test with distinct input hashes and document IDs.
+- [x] Day 10: Authenticated production ingestion, job-progress verification, and empty dead-letter queue check.
+- [x] Day 10: Five OGD CSV documents ingested and verified in the production database; CSV parser newline handling fixed and deployed.
 
 ---
 
 ## Project Status
 
-LoanLens has a FastAPI backend with PostgreSQL integration, database migrations, document search and filtering, sorting, statistics, and monitoring endpoints. The project also includes a document collection and resumable-fetch pipeline, document parsing with PostgreSQL page storage, and a configurable LLM gateway with chat API, usage recording, and a local CLI client.
+LoanLens has completed the D01–D10 implementation milestones: the FastAPI/PostgreSQL backend, database migrations and indexes, Docker-based development environment, CI/CD and production deployment, document collection and parsing, LLM gateway, prompt evaluation and metadata extraction, and asynchronous ingestion queue with worker-recovery verification.
 
-The Day 9 implementation adds versioned classification and metadata-extraction prompts, a labelled prompt evaluation dataset, Pydantic-based metadata validation, and full-corpus metadata extraction. All 10 parsed source documents were successfully processed using `extract_v4`. A separate parsed-documents API supports search, filtering, and pagination without mixing source documents with loan-scheme records.
+The initial parsed corpus contains 10 source documents and 40 pages. Five additional Open Government Data CSV documents were subsequently ingested into production, contributing five pages. As verified on 28 November 2026, the production database contained 35 documents, including those five CSV records. These production totals are distinct from the local development database baseline recorded on 27 November 2026 (20 documents, 0 ingestion jobs and 0 ingestion items).
 
-The Day 9 implementation passed 125 unit tests, Ruff linting, and formatting checks. Local API verification confirmed successful parsed-document listing and filtering, while parsed source document IDs correctly return HTTP 404 from the loan-record lookup endpoint.
+The metadata extraction pipeline processed all 10 initial parsed source documents successfully using `extract_v4`. The separate parsed-documents API supports search, document-kind and language filters, and pagination. Loan-scheme records and parsed source documents remain separate API resource types.
 
-The chat assistant is not yet connected to the extracted scheme metadata. The next development phase focuses on deploying the updated gateway, configuring production secrets, connecting authoritative scheme documents to retrieval, and expanding loan eligibility and repayment calculation capabilities.
+The LLM gateway is deployed and verified in production, with Gemini primary and Groq fallback, circuit-breaker behaviour, usage persistence and aggregation. This does not mean that the assistant has grounded retrieval over the source corpus: scheme-specific retrieval, eligibility answers and repayment calculations remain future product work. Users must confirm rates, eligibility and policy conditions with official lenders and government sources.
+
+All D01–D10 milestones are complete. Follow-on work includes expanding the corpus toward the 1,500+ page target, reviewing known extraction/metadata discrepancies, confirming source-specific collection and reuse rights, and implementing retrieval-grounded loan comparison and repayment calculations.
 
 ---
 
@@ -818,12 +824,9 @@ Built as an education-loan information assistant project.
 - Recovered synthetic item attempts increased from 1 to 2.
 - Synthetic test records were cleaned up after testing.
 
-### Pending Verification
+### Verification Status
 
-- Complete the 20-item worker kill test.
-- Record final queued, running, done and failed counts.
-- Verify zero lost items and zero duplicate documents across the 20-item test.
-- Verify authenticated production ingestion returns HTTP 202 and production job progress is available. Perform only after collection approval evidence is documented.
+The previously pending 20-item worker kill test and production ingestion checks were completed on 28 November 2026. See **D10 — Worker Reliability and Production Ingestion Verification** below for the test qualification and production results.
 
 ### Local verification - 27 November 2026
 
@@ -835,7 +838,61 @@ Built as an education-loan information assistant project.
 - Database baseline after verification: 0 ingestion jobs, 0 ingestion items, and 20 existing documents.
 - API, PostgreSQL, Redis, and worker containers were running; API and database reported healthy.
 
-Verification limitation:
-- This check did not create a new ingestion job or verify a new HTTP 202 response.
-- The full 20-item kill test and its zero-loss/zero-duplicate result remain pending verification.
-- Production authenticated ingestion and production job progress remain pending verification. Do not submit production documents until collection approval evidence is documented.
+These 27 November checks are a historical local baseline only. They preceded the completed D10 test and production verification recorded below.
+
+
+---
+
+## Day 10 — Worker Reliability and Production Ingestion Verification
+
+### Synthetic Worker Kill Test
+
+- Test job: `e4bab11f18744fef87c1ca6e46d8f910`.
+- Test size: 20 synthetic documents/items.
+- Final result: 20 done, 0 skipped, 0 failed, and 0 queued/running.
+- The test produced 20 distinct input hashes and 20 distinct document IDs.
+- After a Docker worker restart, the four remaining unfinished items were restored and processed.
+
+**Test qualification:** Manual re-enqueue operations were used during debugging. This was not a pristine, fully hands-off recovery run; the test demonstrates recovery after restart with that qualification. The isolated test files `data/kill-test-manifest.jsonl` and `docker-compose.kill-test.yml` remain local test artifacts and should not be committed.
+
+### Production CSV Ingestion
+
+Five CSV datasets were added under `data/ogd_sources/` and registered in `data/manifest.jsonl`. They include scholarship/funding information and loan account/disbursement data; they should not all be described as education-loan scheme datasets.
+
+- Initial production ingestion processed four files and recorded one parser failure.
+- The failed file was `RS_Session_260_AU_768_B.csv`, initially reported as `parse: corrupt`.
+- The CSV parser was corrected in `src/loanlens/ingest/parse.py` to preserve newline handling by using `io.StringIO(raw, newline="")`.
+- The fix was merged in PR #42 (commit `d48b738`) and the Render deployment was verified.
+- A retry completed the remaining file: 1 done, 0 skipped, 0 failed, one page stored, and an empty dead-letter list.
+- Production SQL verification confirmed five distinct document records (IDs 31–35), five distinct source URLs, and five pages across the five CSV documents.
+
+The historical failed attempt remains visible in ingestion history; the retry succeeded and the dead-letter queue was empty at verification time.
+
+### Production Ingestion API Verification
+
+- Unauthenticated production `POST /v1/ingest` returned HTTP 401.
+- Authenticated production ingestion/job-progress routes were verified.
+- Authenticated `GET /v1/ingest/dead-letter` returned HTTP 200 with count 0 and an empty list.
+- The production database contained 35 documents at the 28 November 2026 verification point.
+
+### Data Rights and Collection Scope
+
+The five CSVs are registered with OGD/GODL-India collection evidence in the manifest. That metadata records the basis used for collection; it is not a substitute for independently confirming the applicable licence and reuse conditions for each individual dataset. Do not imply that every dataset or future source has blanket legal clearance.
+
+---
+
+## Current Corpus and Verification Snapshot — 28 November 2026
+
+| Environment / measure | Verified value |
+|---|---:|
+| Initial parsed corpus | 10 documents |
+| Initial parsed pages | 40 |
+| Additional production CSV documents | 5 |
+| Additional production CSV pages | 5 |
+| Production database documents | 35 |
+| Production ingestion dead-letter items | 0 |
+| Long-term corpus target | 1,500+ pages |
+
+The 35-document production count includes the five CSV documents and should not be confused with the 20-document local database baseline recorded on 27 November 2026. Corpus expansion toward 1,500+ pages remains ongoing.
+
+**Milestone status:** D01–D10 completed. Product-level retrieval grounding, broader corpus expansion, further extraction-quality review, and loan-comparison/repayment features remain follow-on work.
