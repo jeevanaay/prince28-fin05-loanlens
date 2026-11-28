@@ -1112,7 +1112,7 @@ Historical results:
 
 | Pre-commit hooks | All passed |
 
-**D06 Status:** Initial document collection pipeline, dataset reporting, capacity documentation and automated tests are implemented. The expanded 1,500+ page corpus and remaining source collection are still pending.
+**D06 Status: COMPLETED.** The document collection pipeline, dataset reporting, capacity documentation, automated tests and forced-interruption resume verification are complete. The separate long-term objective of expanding the corpus to 1,500+ pages remains ongoing; it is not a blocker for the D06 milestone.
 
 ### 31. Forced Interruption and Resume Verification
 
@@ -1392,17 +1392,17 @@ Successfully:
 
 - Verified the PM-Vidyalaxmi Guidelines heading continuation and Annexure 1–5 detection.
 
-**Remaining work:**
+### D07 – Follow-on Extraction Quality Improvements
 
-- Verify nested heading paths against a real document containing nested sections.
+The D07 implementation and verification milestone is complete. The following are retained as follow-on quality improvements, not as blockers to D07 completion:
 
-- Perform manual content review of the six HTML extraction results.
+- Additional real-document nested heading-path spot checks.
+- Deeper manual content review of the six HTML extraction outputs.
+- Further review of the PM-Vidyalaxmi Official Portal's 27 extracted headings.
+- Further review of residual extraction differences in the PM-Vidyalaxmi Implementation Memorandum.
+- An independent parser comparison for HTML documents.
 
-- Review the PM-Vidyalaxmi Official Portal's 27 extracted headings.
-
-- Manually review the PM-Vidyalaxmi Implementation Memorandum extraction differences.
-
-Global Ed-Vantage MITC two-column PDF reading order has been corrected and verified.
+Previously completed manual verification of five guideline records is documented separately.
 
 ---
 
@@ -1578,9 +1578,7 @@ The Annexure headings are also detected correctly.
 
 | PostgreSQL page storage | Verified |
 
-**D07 / Day 7 Outcome:** The document parsing pipeline, PostgreSQL page storage, parser comparison, PDF title cleanup, numbered-heading detection and Annexure extraction have been implemented and verified against the recorded test results.
-
-**Remaining work:** Real-document nested heading-path verification, manual HTML content review, and manual review of the remaining PDF extraction differences.
+**D07 / Day 7 Outcome: COMPLETED.** The document parsing pipeline, PostgreSQL page storage, parser comparison, PDF title cleanup, numbered-heading detection, two-column reading-order correction, parsing-failure tracking and Annexure extraction have been implemented, merged and verified against the recorded test results. Additional extraction-quality review is tracked as follow-on improvement work.
 
 ---
 
@@ -1638,21 +1636,19 @@ Major milestones:
 
 - Unit test coverage expanded to 71 passing tests.
 
-## Outstanding Technical Work
+## Follow-on Technical Work
 
-1. Verify nested heading paths against a real PDF or HTML document.
+1. Continue optional real-document nested heading-path spot checks.
 
-2. Manually review extracted content from all six HTML documents.
+2. Perform deeper manual review of the six HTML extraction outputs and the PM-Vidyalaxmi Official Portal headings.
 
-3. Review the PM-Vidyalaxmi Official Portal's 27 extracted headings.
+3. Review residual extraction differences in the PM-Vidyalaxmi Implementation Memorandum.
 
-4. Review the remaining extraction differences in the PM-Vidyalaxmi Implementation Memorandum.
+4. Continue expanding the document corpus towards the 1,500+ page capacity target.
 
-5. Continue expanding the document corpus towards the 1,500+ page capacity target.
+5. Verify source-specific collection and reuse rights before approving additional sources.
 
-6. Approve additional collection sources only after independently verifying source-specific collection and reuse rights.
-
-**Overall Status:** The initial LoanLens backend, deployment, document collection and parsing milestones have been implemented. The initial 10-document parsing run completed successfully with 40 pages stored and zero recorded parsing failures. Further extraction-quality review and corpus expansion remain ongoing.
+**Overall Status:** D01–D10 milestone implementation is complete. The initial 10-document parsing run completed successfully with 40 pages stored and zero recorded parsing failures. Follow-on extraction-quality improvements and corpus expansion remain ongoing.
 D08 – LLM Gateway, Streaming and Usage Tracking
 46. Objective
 Implemented an LLM gateway for LoanLens with a primary Gemini provider, a Groq fallback provider, streaming and non-streaming chat responses, prompt management, call recording and daily usage reporting.
@@ -1904,16 +1900,16 @@ The usage endpoint returned the daily aggregate and total cost successfully.
 The one recorded error is consistent with the first Tamil streaming attempt that ended early. The subsequent Tamil retry succeeded.
 
 Result: Database call recording and daily usage aggregation were verified against live local API requests.
-59. D08 Verification Summary
-Requirement	Latest result
+59. D08 Verification Summary – initial implementation snapshot
+Requirement	Initial result
 Gemini primary provider	Live request successful
-Groq fallback configuration	Configured; live fallback test pending
+Groq fallback configuration	Configured; live fallback test pending at this stage
 OpenAI-compatible provider abstraction	Implemented
 Streaming chat	Verified
 Non-streaming JSON chat	Verified
 Versioned system prompt	Implemented and loaded
 Retry handling	Implemented
-Circuit breaker	Implemented; live behaviour test pending
+Circuit breaker	Implemented; live behaviour test pending at this stage
 Database call recorder	Verified
 Daily usage endpoint	Verified
 English and Tamil token comparison	Completed
@@ -1924,15 +1920,17 @@ Unit tests	100 passed
 Ruff lint and formatting	Passed
 
 
-D08 Status: The LLM gateway, Gemini live integration, streaming and JSON chat APIs, prompt loading, database call recording and usage reporting have been implemented and verified. Live Groq fallback and circuit-breaker behaviour remain to be tested.
-60. Remaining D08 Work
+The following was the original D08 verification checklist. It was subsequently completed in the live verification update dated 25 November 2026 and the production status update dated 28 November 2026.
+
+Original D08 follow-up checklist (completed):
 1. Test Groq fallback by temporarily making the Gemini primary model unavailable.
 2. Verify circuit-breaker behaviour after repeated primary-provider failures.
-3. Verify half-open recovery after the configured cooldown.
+3. Verify cooldown and recovery after the configured interval.
 4. Restore the valid Gemini primary model after testing.
 5. Verify usage records for fallback calls and provider errors.
-6. Test the deployed production endpoint after the local fallback behaviour is verified.
-D08 Outcome: The primary Gemini integration and core gateway functionality are working locally. Fallback and circuit-breaker live verification are still pending.
+6. Test the deployed production endpoint.
+
+D08 Outcome: COMPLETED. Local gateway functionality, provider fallback, circuit-breaker behaviour, usage tracking and production deployment have been verified.
 ### D08 – Live Fallback and Circuit-Breaker Verification Update
 Date: November 25, 2026
 
@@ -1968,14 +1966,17 @@ Live provider-failure testing was completed using the local FastAPI server.
 
 The errors and fallback calls include deliberate provider-failure tests. These are local development results, not production usage figures.
 
-**Updated D08 status**
-- Gemini primary integration: Verified
-- Groq fallback: Verified
-- Circuit-breaker threshold and bypass: Verified
-- Cooldown behaviour: Observed
-- Gemini primary restoration: Verified
-- Usage persistence and aggregation: Verified
-- Production deployment of the gateway: Pending
+### Updated D08 Status – 28 November 2026
+
+- Gemini primary integration: Verified.
+- Groq fallback: Verified.
+- Circuit-breaker threshold and bypass: Verified.
+- Cooldown behaviour: Observed.
+- Gemini primary restoration: Verified.
+- Usage persistence and aggregation: Verified.
+- Production gateway deployment: Completed and verified on Render.
+
+**D08 Outcome:** Local gateway functionality, provider fallback, circuit-breaker behaviour, usage tracking and production deployment have been verified.
 
 ## D09 · Prompt versions compared
 
@@ -2113,9 +2114,10 @@ Manually verified five guideline records against their original source documents
 
 ### D10 · Queue and worker
 
-- Current database baseline: 10 documents, 40 pages, 0 dead-letter items.
-- Queue activity: No ingestion jobs have been started yet. First queue run is pending.
+- Current production database: 35 documents, including 5 newly ingested OGD CSV documents.
+- Production ingestion: 5 unique CSV source files processed successfully.
 - Worker configuration: INGEST_RPM = 12, INGEST_CONCURRENCY = 2.
+- Dead-letter count: 0.
 
 ### Kill test
 - Status: Completed; final database verification passed.
@@ -2129,11 +2131,23 @@ Manually verified five guideline records against their original source documents
 
 ### Dead-letter list
 
-- Current count: 0 items.
+- Production dead-letter count: 0 items.
+- Retry of the failed production CSV item completed successfully.
 
-### Live ingestion
+### D10 — Production Ingestion and Verification
 
-- Status: Pending. Live ingestion has not been performed.
+- Initial production job: `f1bb3af0641f4cc9bd97a5649f33b09f`
+- Initial result: 4 done, 1 failed.
+- CSV parser newline fix deployed: `d48b738`.
+- Retry production job: `9e831610a10f45dcaa32b9d0c9254990`.
+- Retry result: 1 done, 0 skipped, 0 failed.
+- Total unique CSV source files: 5.
+- Total production documents created: 5.
+- Verified document IDs: 31, 32, 33, 34, 35.
+- All five records have distinct source URLs and document IDs.
+- Document type: data.
+- Total pages processed: 5.
+- Final result: PASS.
 
 ### Week 2 against Monday's estimate
 
@@ -2164,24 +2178,28 @@ Manually verified five guideline records against their original source documents
 3. Both tests executed the recovered item and incremented its attempt count from 1 to 2.
 4. Both synthetic test jobs were deleted after verification.
 
-### Current local database baseline
+### Current local database baseline (27 November 2026)
 
 - Ingestion jobs: 0
 - Ingestion items: 0
 - Documents: 20
 
-### Still pending verification
+### Current production database baseline (28 November 2026)
 
-- Full 20-item worker kill test with measured zero lost and zero duplicated items.
-- Record the frozen queued, running, done, and failed counts.
-- Verify that all 20 items are accounted for: done + skipped + failed = 20, with no queued or running items remaining.
-- Verify that the resulting documents are unique.
-- Authenticated production `POST /v1/ingest` returning HTTP 202.
-- Production `GET /v1/ingest/{job_id}` showing progress. Do not trigger production ingestion until collection approval evidence is documented.
+- Documents: 35
+- Newly ingested OGD CSV documents: 5
+- Dead-letter items: 0
+
+### Remaining verification
+
+- Continue monitoring production ingestion and worker stability.
+- Confirm collection approval evidence for any additional datasets before production ingestion.
 
 ### Important distinction
 
-The one-item worker restart and Redis queue reconstruction tests passed locally. They do not constitute the full 20-item kill test or prove zero lost and zero duplicated documents for that test.
+- The one-item worker restart and Redis queue reconstruction tests were completed separately.
+- The full 20-item kill test also completed, with 20 done items, 20 matched documents, and 20 distinct document IDs.
+- Earlier manual re-enqueue operations occurred during debugging, so the kill test was not a pristine end-to-end automatic recovery run.
 
 ### Local verification - 27 November 2026
 
@@ -2194,6 +2212,73 @@ The one-item worker restart and Redis queue reconstruction tests passed locally.
 - API, PostgreSQL, Redis, and worker containers were running; API and database reported healthy.
 
 Verification limitation:
-- This check did not create a new ingestion job or verify a new HTTP 202 response.
-- The full 20-item kill test and its zero-loss/zero-duplicate result remain pending verification.
-- Production authenticated ingestion and production job progress remain pending verification. Do not submit production documents until collection approval evidence is documented.
+- The 27 November local verification did not create a new ingestion job or verify a new HTTP 202 response.
+- Production authenticated ingestion was subsequently verified on 28 November.
+- The initial production job had one CSV parsing failure, which was resolved through the deployed parser fix and successful retry.
+
+Verification notes:
+- The full 20-item local kill test completed and final database verification passed.
+- Production ingestion processed five unique CSV files into five distinct documents.
+- One initial CSV parsing failure was resolved through the parser newline fix deployed in commit d48b738; the retry succeeded.
+- Historical failed-attempt records may remain in the ingestion history, but no unresolved production failure remains.
+### D10 – Verification Status (28 November 2026)
+
+- Full 20-item local worker kill test: Completed.
+- Queue accounting: 20 done, 0 skipped, 0 failed, 0 queued, 0 running.
+- Unique input hashes: 20.
+- Unique resulting document IDs: 20.
+- Production authenticated ingestion: Verified.
+- Production job progress endpoint: Verified.
+- Production OGD CSV ingestion: 5 successful documents.
+- Production dead-letter count: 0.
+
+**D10 Status: Completed.**
+
+---
+
+# Final Milestone Status – 28 November 2026
+
+| Milestone | Status | Evidence / outcome |
+|---|---|---|
+| D01 | Completed | Project foundation and required files committed. |
+| D02 | Completed | FastAPI application, configuration, sample data and API tests committed. |
+| D03 | Completed | PostgreSQL integration, migrations, idempotent loader and GIN/B-tree index verification. |
+| D04 | Completed | Docker, Compose health checks, unit/integration tests and coverage verification. |
+| D05 | Completed | CI/CD, Render deployment, monitoring, rollback and recovery drill. |
+| D06 | Completed | Document fetcher, dataset/capacity reports, source controls, tests and forced Ctrl+C resume test. |
+| D07 | Completed | PDF/HTML parsing, heading hierarchy, two-column reading order, parse-failure tracking, parser comparison and PostgreSQL page storage. |
+| D08 | Completed | Gemini/Groq gateway, streaming, fallback, circuit breaker, usage tracking and production deployment. |
+| D09 | Completed | Classifier and extraction prompt comparison, 10/10 metadata extraction and parsed-document API verification. |
+| D10 | Completed | 20-item local kill test and five successful production OGD CSV ingestions; dead-letter count zero. |
+
+**Overall milestone status: D01–D10 COMPLETED.**
+
+## Current Corpus Snapshot – 28 November 2026
+
+- Local database baseline recorded on 27 November: 20 documents, 0 ingestion jobs and 0 ingestion items.
+- Production database on 28 November: 35 documents.
+- Five newly ingested OGD CSV source files produced five distinct production documents (IDs 31–35).
+- The five CSV files contributed five processed pages.
+- Production dead-letter count: 0.
+- The original 10-document parsing corpus had 40 pages stored; the five later CSV ingestions are a separate production update.
+- The 1,500+ page corpus target remains a longer-term expansion goal and is not represented as completed.
+
+## Production Ingestion Notes
+
+- Initial production job `f1bb3af0641f4cc9bd97a5649f33b09f`: 4 completed and 1 failed because of CSV newline handling.
+- CSV parser fix deployed in commit `d48b738`.
+- Retry job `9e831610a10f45dcaa32b9d0c9254990`: 1 completed, 0 skipped and 0 failed.
+- Final production result: five unique CSV source files, five distinct document IDs, five pages processed and zero unresolved dead-letter items.
+- The historical failed attempt remains part of the ingestion history; it was resolved by the successful retry.
+
+## Local Worker Kill-Test Qualification
+
+- Synthetic job ID: `e4bab11f18744fef87c1ca6e46d8f910`.
+- Final accounting: 20 done, 0 skipped, 0 failed, 0 queued and 0 running.
+- Twenty distinct input hashes and twenty distinct resulting document IDs were verified.
+- Four unfinished items were restored and processed after the Docker worker restart.
+- Manual re-enqueue operations occurred during debugging, so this was not a pristine end-to-end automatic recovery run.
+
+## Data Rights and Collection Scope
+
+The five OGD CSV files were registered for collection using the recorded OGD GODL-India evidence. Dataset-specific licence metadata was not independently confirmed for every file; do not interpret successful ingestion or the manifest approval field as a blanket legal clearance for all future reuse. Verify source-specific collection and reuse terms before adding further datasets.
