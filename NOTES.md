@@ -2118,8 +2118,14 @@ Manually verified five guideline records against their original source documents
 - Worker configuration: INGEST_RPM = 12, INGEST_CONCURRENCY = 2.
 
 ### Kill test
-
-- Status: Pending. No kill test has been performed or verified yet.
+- Status: Completed; final database verification passed.
+- Synthetic job ID: e4bab11f18744fef87c1ca6e46d8f910.
+- Total items: 20.
+- Final status: 20 done, 0 skipped, 0 failed, 0 queued, 0 running.
+- SHA-256 verification: 20 items with hashes and 20 distinct input hashes.
+- Document verification: 20 matched documents and 20 distinct document IDs.
+- Recovery observation: After restarting the Docker worker, all 4 remaining unfinished items were automatically restored and processed.
+- Qualification: Earlier manual re-enqueue operations occurred during debugging; this was not a pristine end-to-end automatic recovery run.
 
 ### Dead-letter list
 
